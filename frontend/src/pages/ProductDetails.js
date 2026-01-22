@@ -1,13 +1,11 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux";
+import { useSelector } from "react-redux";
 import axios from "axios";
-import { placeOrder } from "../redux/slices/orderSlice";
 
 const ProductDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const dispatch = useDispatch();
 
   const { user } = useSelector((state) => state.auth);
 
@@ -24,7 +22,7 @@ const ProductDetails = () => {
           `http://localhost:5000/api/products/${id}`
         );
         setProduct(res.data);
-      } catch (err) {
+      } catch {
         setError("Product not found");
       } finally {
         setLoading(false);
@@ -34,12 +32,11 @@ const ProductDetails = () => {
     fetchProduct();
   }, [id]);
 
-  /* BUY NOW HANDLER */
+  /* BUY NOW - DIRECT ORDER */
   const buyNowHandler = async () => {
     try {
-      // 1️⃣ Create temporary cart (Buy Now)
       await axios.post(
-        "http://localhost:5000/api/cart/buynow",
+        "http://localhost:5000/api/orders/buy-now",
         {
           productId: product._id,
           quantity: qty,
@@ -51,13 +48,9 @@ const ProductDetails = () => {
         }
       );
 
-      // 2️⃣ Place order using existing order logic
-      await dispatch(placeOrder(user.token));
-
-      // 3️⃣ Navigate to orders page
       navigate("/buyer/orders");
-    } catch (error) {
-      alert("Buy now failed");
+    } catch {
+      alert("Buy Now failed");
     }
   };
 
@@ -68,22 +61,18 @@ const ProductDetails = () => {
     <div className="container mt-4">
       <div className="card p-4 shadow-sm">
         <h3>{product.name}</h3>
-
         <p className="text-muted">
           Category: {product.category?.name}
         </p>
 
         <h4 className="text-success">₹{product.price}</h4>
-
         <p>{product.description}</p>
 
-        {/* QUANTITY CONTROLS */}
+        {/* QTY */}
         <div className="d-flex align-items-center mb-3">
           <button
             className="btn btn-outline-secondary"
-            onClick={() =>
-              setQty((prev) => Math.max(1, prev - 1))
-            }
+            onClick={() => setQty((q) => Math.max(1, q - 1))}
           >
             −
           </button>
@@ -92,13 +81,12 @@ const ProductDetails = () => {
 
           <button
             className="btn btn-outline-secondary"
-            onClick={() => setQty((prev) => prev + 1)}
+            onClick={() => setQty((q) => q + 1)}
           >
             +
           </button>
         </div>
 
-        {/* BUY NOW */}
         <button
           className="btn btn-success w-50"
           onClick={buyNowHandler}

@@ -1,5 +1,40 @@
 import Order from "../models/orderModel.js";
 import Cart from "../models/cartModel.js";
+import Product from "../models/productModel.js";
+
+/* BUY NOW - DIRECT ORDER (NO CART) */
+export const buyNowOrder = async (req, res) => {
+  try {
+    const { productId, quantity } = req.body;
+
+    const product = await Product.findById(productId);
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    const qty = quantity || 1;
+
+    const order = await Order.create({
+      user: req.user._id,
+      items: [
+        {
+          product: product._id,
+          quantity: qty,
+          price: product.price,
+          seller: product.seller,
+        },
+      ],
+      totalAmount: product.price * qty,
+      status: "Placed",
+    });
+
+    res.status(201).json(order);
+  } catch (error) {
+    console.error("Buy Now Order Error:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
 
 
 export const placeOrder = async (req, res) => {
@@ -149,3 +184,5 @@ export const getAllOrders = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+

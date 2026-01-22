@@ -2,21 +2,43 @@ import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { fetchProducts } from "../redux/slices/productSlice";
-import { addItemToCart } from "../redux/slices/cartSlice";
+import {
+  addItemToCart,
+  clearCartMessage,
+} from "../redux/slices/cartSlice";
 
 const BuyerProducts = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const { products, page, totalPages, isLoading } =
-    useSelector((state) => state.product);
+  const {
+    products,
+    page,
+    totalPages,
+    isLoading,
+  } = useSelector((state) => state.product);
 
   const { user } = useSelector((state) => state.auth);
 
-  /* Load first page */
+  const { successMessage } = useSelector(
+    (state) => state.cart
+  );
+
+  /* LOAD FIRST PAGE */
   useEffect(() => {
     dispatch(fetchProducts({ page: 1 }));
   }, [dispatch]);
+
+  /* AUTO CLEAR CART ALERT */
+  useEffect(() => {
+    if (successMessage) {
+      const timer = setTimeout(() => {
+        dispatch(clearCartMessage());
+      }, 2000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [successMessage, dispatch]);
 
   const changePage = (newPage) => {
     dispatch(fetchProducts({ page: newPage }));
@@ -26,6 +48,13 @@ const BuyerProducts = () => {
     <div className="container mt-4">
       <h3>Products</h3>
 
+      {/* ADD TO CART ALERT */}
+      {successMessage && (
+        <div className="alert alert-success">
+          {successMessage}
+        </div>
+      )}
+
       {isLoading && <p>Loading products...</p>}
 
       <div className="row">
@@ -33,7 +62,7 @@ const BuyerProducts = () => {
           <div key={p._id} className="col-md-3">
             <div className="card mb-3 shadow-sm">
 
-              {/* CLICKABLE PRODUCT CARD */}
+              {/* PRODUCT CARD */}
               <div
                 className="card-body"
                 style={{ cursor: "pointer" }}

@@ -9,6 +9,7 @@ import protect from "../middlewares/authMiddleware.js";
 import authorizeRoles from "../middlewares/roleMiddleware.js";
 import { getAllOrders } from "../controllers/orderController.js";
 import { getSellerOrders } from "../controllers/orderController.js";
+import { buyNowOrder } from "../controllers/orderController.js";
 
 
 const router = express.Router();
@@ -24,6 +25,13 @@ router.put("/seller/:orderId", protect, authorizeRoles("seller"), sellerUpdateOr
 /* ADMIN */
 router.get("/", protect, authorizeRoles("admin"), getAllOrders);
 router.put("/admin/:orderId", protect, authorizeRoles("admin"), adminUpdateOrderStatus);
+router.post(
+  "/buy-now",
+  protect,
+  authorizeRoles("buyer"),
+  buyNowOrder
+);
+
 
 
 export default router;

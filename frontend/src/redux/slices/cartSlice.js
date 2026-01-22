@@ -38,8 +38,13 @@ const cartSlice = createSlice({
   initialState: {
     items: [],
     isLoading: false,
+    successMessage: "",
   },
-  reducers: {},
+  reducers: {
+    clearCartMessage: (state) => {
+      state.successMessage = "";
+    },
+  },
   extraReducers: (builder) => {
     builder
       .addCase(fetchCart.fulfilled, (state, action) => {
@@ -47,6 +52,7 @@ const cartSlice = createSlice({
       })
       .addCase(addItemToCart.fulfilled, (state, action) => {
         state.items = action.payload.items;
+        state.successMessage = "Product added to cart";
       })
       .addCase(removeItemFromCart.fulfilled, (state, action) => {
         state.items = action.payload.items;
@@ -57,4 +63,5 @@ const cartSlice = createSlice({
   },
 });
 
+export const { clearCartMessage } = cartSlice.actions;
 export default cartSlice.reducer;
