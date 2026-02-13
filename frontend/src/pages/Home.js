@@ -108,7 +108,7 @@ const Home = () => {
               </h2>
 
               <p className={styles.startText}>
-                Browse thousands of curated products, compare prices instantly,
+                Browse thousands of curated products, Compare prices instantly,
                 and enjoy a smooth checkout experience. SnapShop helps you save
                 time while discovering trending products loved by customers.
               </p>
