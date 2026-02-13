@@ -28,28 +28,43 @@ const SellerOrders = () => {
   };
 
   return (
-    <div className="container mt-4">
-      <h3>Seller Orders</h3>
+    <div className="container py-4">
+      <h3 className="fw-bold text-primary mb-4">Seller Orders</h3>
 
-      {orders.map((order) => (
-        <div key={order._id} className="card mb-3 p-3">
-          <p><strong>Buyer:</strong> {order.user?.name}</p>
-          <p><strong>Total:</strong> ₹{order.totalAmount}</p>
+      {orders.length === 0 ? (
+        <div className="alert alert-info">No orders available.</div>
+      ) : (
+        orders.map((order) => (
+          <div key={order._id} className="card shadow-sm border-0 rounded-4 mb-4">
+            <div className="card-body">
 
-          <select
-            className="form-select w-50"
-            value={order.status}
-            disabled={order.status === "Shipped" || order.status === "Delivered"}
-            onChange={(e) =>
-              updateStatus(order._id, e.target.value)
-            }
-          >
-            <option value="Placed">Placed</option>
-            <option value="Packed">Packed</option>
-            <option value="Shipped">Shipped</option>
-          </select>
-        </div>
-      ))}
+              <div className="d-flex justify-content-between align-items-center mb-3">
+                <h6 className="fw-bold mb-0">
+                  Order #{order._id.slice(-6)}
+                </h6>
+                <span className="badge bg-primary">{order.status}</span>
+              </div>
+
+              <p className="mb-1"><strong>Buyer:</strong> {order.user?.name}</p>
+              <p className="mb-3"><strong>Total:</strong> ₹{order.totalAmount}</p>
+
+              <select
+                className="form-select w-50"
+                value={order.status}
+                disabled={order.status === "Shipped" || order.status === "Delivered"}
+                onChange={(e) =>
+                  updateStatus(order._id, e.target.value)
+                }
+              >
+                <option value="Placed">Placed</option>
+                <option value="Packed">Packed</option>
+                <option value="Shipped">Shipped</option>
+              </select>
+
+            </div>
+          </div>
+        ))
+      )}
     </div>
   );
 };

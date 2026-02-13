@@ -17,10 +17,27 @@ const createProduct = async (data, token) => {
       Authorization: `Bearer ${token}`,
     },
   });
+
   return res.data;
 };
+
+
+const getSellerProducts = async (token) => {
+  const res = await axios.get(
+    `${API_URL}/seller/my-products`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  return res.data;
+};
+
 
 export default {
   getProducts,
   createProduct,
+  getSellerProducts,
 };

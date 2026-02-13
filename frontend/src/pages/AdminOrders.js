@@ -27,30 +27,52 @@ const AdminOrders = () => {
     fetchOrders();
   };
 
+  const statusBadge = (status) => {
+    if (status === "Delivered") return "success";
+    if (status === "Cancelled") return "danger";
+    return "warning";
+  };
+
   return (
-    <div className="container mt-4">
-      <h3>Admin Orders</h3>
+    <div className="container py-4">
+      <h3 className="fw-bold text-primary mb-4">Admin Orders</h3>
 
-      {orders.map((order) => (
-        <div key={order._id} className="card mb-3 p-3">
-          <p><strong>Buyer:</strong> {order.user?.name}</p>
-          <p><strong>Status:</strong> {order.status}</p>
+      {orders.length === 0 ? (
+        <div className="alert alert-info">No orders found.</div>
+      ) : (
+        orders.map((order) => (
+          <div key={order._id} className="card shadow-sm border-0 rounded-4 mb-4">
+            <div className="card-body">
+              <div className="d-flex justify-content-between align-items-center mb-3">
+                <h6 className="fw-bold mb-0">Order #{order._id.slice(-6)}</h6>
+                <span className={`badge bg-${statusBadge(order.status)}`}>
+                  {order.status}
+                </span>
+              </div>
 
-          <button
-            className="btn btn-success me-2"
-            onClick={() => updateStatus(order._id, "Delivered")}
-          >
-            Mark Delivered
-          </button>
+              <p className="mb-1">
+                <strong>Buyer:</strong> {order.user?.name}
+              </p>
 
-          <button
-            className="btn btn-danger"
-            onClick={() => updateStatus(order._id, "Cancelled")}
-          >
-            Cancel Order
-          </button>
-        </div>
-      ))}
+              <div className="mt-3">
+                <button
+                  className="btn btn-success btn-sm me-2"
+                  onClick={() => updateStatus(order._id, "Delivered")}
+                >
+                  Mark Delivered
+                </button>
+
+                <button
+                  className="btn btn-danger btn-sm"
+                  onClick={() => updateStatus(order._id, "Cancelled")}
+                >
+                  Cancel Order
+                </button>
+              </div>
+            </div>
+          </div>
+        ))
+      )}
     </div>
   );
 };

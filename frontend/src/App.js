@@ -1,30 +1,53 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Navbar from "./components/Navbar";
-import ProtectedRoute from "./components/ProtectedRoute";
 
 // Pages
+import Home from "./pages/Home.js"
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
-import BuyerDashboard from "./pages/BuyerDashboard";
+
+
+//seller
 import SellerDashboard from "./pages/SellerDashboard";
-import AdminDashboard from "./pages/AdminDashboard";
-import Unauthorized from "./pages/Unauthorized";
-import AdminCategories from "./pages/AdminCategories";
 import SellerAddProduct from "./pages/SellerAddProduct";
+import SellerOrders from "./pages/SellerOrders";
+import SellerProducts from "./pages/SellerProducts";
+
+//un
+import Unauthorized from "./pages/Unauthorized";
+
+//buyer
+import BuyerDashboard from "./pages/BuyerDashboard";
 import BuyerProducts from "./pages/BuyerProducts";
 import BuyerCart from "./pages/BuyerCart";
 import BuyerOrders from "./pages/BuyerOrders";
-import SellerOrders from "./pages/SellerOrders";
-import AdminOrders from "./pages/AdminOrders";
 import ProductDetails from "./pages/ProductDetails";
+
+
+//admin
+import AdminDashboard from "./pages/AdminDashboard";
+import AdminCategories from "./pages/AdminCategories";
+import AdminOrders from "./pages/AdminOrders";
+import AdminPendingProducts from "./pages/AdminPendingProducts";
+
+
+//components
+import RoleNavbar from "./components/RoleNavbar.js";
+import Footer from "./components/Footer";
+import Navbar from "./components/Navbar";
+import ProtectedRoute from "./components/ProtectedRoute";
+
+
 
 function App() {
   return (
     <BrowserRouter>
-      {/* <Navbar /> */}
+
+     <div className="d-flex flex-column min-vh-100">
+       <RoleNavbar />
 
       <Routes>
         {/* Public Routes */}
+        <Route path="/" element={<Home/>}/>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/unauthorized" element={<Unauthorized />} />
@@ -40,12 +63,20 @@ function App() {
         <Route path="/seller" element={<ProtectedRoute roles={["seller"]}><SellerDashboard /></ProtectedRoute>} />
         <Route path="/seller/orders" element={<ProtectedRoute roles={["seller"]}><SellerOrders /></ProtectedRoute>} />
         <Route path="/seller/add-product" element={<ProtectedRoute roles={["seller"]}><SellerAddProduct /></ProtectedRoute>} />
+        <Route path="/seller/products" element={  <ProtectedRoute roles={["seller"]}>  <SellerProducts />  </ProtectedRoute>  } />
+
 
         {/* Admin Routes */}
         <Route path="/admin" element={<ProtectedRoute roles={["admin"]}><AdminDashboard /></ProtectedRoute>} />
         <Route path="/admin/orders" element={<ProtectedRoute roles={["admin"]}><AdminOrders /></ProtectedRoute>} />
         <Route path="/admin/categories" element={<ProtectedRoute roles={["admin"]}><AdminCategories /></ProtectedRoute>} />
+        <Route path="/admin/pending-products" element={<ProtectedRoute roles={["admin"]}> <AdminPendingProducts /></ProtectedRoute>
+  }
+/>
+
       </Routes>
+      </div>
+      <Footer/>
     </BrowserRouter>
   );
 }

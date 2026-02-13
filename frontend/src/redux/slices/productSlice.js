@@ -29,6 +29,20 @@ export const addProduct = createAsyncThunk(
   }
 );
 
+export const fetchSellerProducts = createAsyncThunk(
+  "product/fetchSellerProducts",
+  async (token, thunkAPI) => {
+    try {
+      return await productService.getSellerProducts(token);
+    } catch (error) {
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || "Failed to load seller products"
+      );
+    }
+  }
+);
+
+
 const productSlice = createSlice({
   name: "product",
   initialState: {
@@ -77,7 +91,22 @@ const productSlice = createSlice({
         state.isLoading = false;
         state.isError = true;
         state.message = action.payload;
-      });
+      })
+
+      /* FETCH SELLER PRODUCTS */
+.addCase(fetchSellerProducts.pending, (state) => {
+  state.isLoading = true;
+})
+.addCase(fetchSellerProducts.fulfilled, (state, action) => {
+  state.isLoading = false;
+  state.products = action.payload;
+})
+.addCase(fetchSellerProducts.rejected, (state, action) => {
+  state.isLoading = false;
+  state.isError = true;
+  state.message = action.payload;
+});
+
   },
 });
 

@@ -2,6 +2,13 @@ import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchMyOrders } from "../redux/slices/orderSlice";
 
+import {
+  FaBox,
+  FaBoxOpen,
+  FaShippingFast,
+  FaCheckCircle,
+} from "react-icons/fa";
+
 const BuyerOrders = () => {
   const dispatch = useDispatch();
 
@@ -32,87 +39,135 @@ const BuyerOrders = () => {
   };
 
   const timelineSteps = [
-    "Placed",
-    "Packed",
-    "Shipped",
-    "Delivered",
+    { label: "Placed", icon: <FaBox /> },
+    { label: "Packed", icon: <FaBoxOpen /> },
+    { label: "Shipped", icon: <FaShippingFast /> },
+    { label: "Delivered", icon: <FaCheckCircle /> },
   ];
 
   return (
-    <div className="container mt-4">
-      <h3>My Orders</h3>
+    <div className="container py-4">
+      <h3 className="fw-bold mb-4">My Orders</h3>
 
       {isLoading && <p>Loading orders...</p>}
 
       {!isLoading && orders.length === 0 && (
-        <p>No orders yet</p>
+        <div className="alert alert-info rounded-3">
+          No orders yet.
+        </div>
       )}
 
-      {orders.map((order) => (
-        <div
-          key={order._id}
-          className="card mb-3 p-3 shadow-sm"
-        >
-          <div className="d-flex justify-content-between align-items-center">
-            <p className="mb-1">
-              <strong>Total:</strong> ₹
-              {order.totalAmount}
-            </p>
+      {orders.map((order) => {
+        const currentIndex = timelineSteps.findIndex(
+          (s) => s.label === order.status
+        );
 
-            <span
-              className={`badge ${statusBadge(
-                order.status
-              )}`}
-            >
-              {order.status}
-            </span>
-          </div>
+        return (
+          <div
+            key={order._id}
+            className="card border-0 shadow-sm rounded-4 mb-4"
+          >
+            <div className="card-body">
 
-          <small className="text-muted">
-            Ordered on{" "}
-            {new Date(
-              order.createdAt
-            ).toLocaleString()}
-          </small>
+              {/* HEADER */}
+              <div className="d-flex justify-content-between align-items-center flex-wrap">
+                <div>
+                  <h6 className="mb-1 fw-bold">
+                    Order #{order._id.slice(-6)}
+                  </h6>
+                  <small className="text-muted">
+                    Ordered on{" "}
+                    {new Date(order.createdAt).toLocaleString()}
+                  </small>
+                </div>
 
-          <hr />
-
-          {order.items?.map((item, index) => (
-            <div key={index}>
-              <small>
-                {item.product?.name} ×{" "}
-                {item.quantity}
-              </small>
-            </div>
-          ))}
-
-          {/* ORDER TIMELINE */}
-          <div className="d-flex justify-content-between mt-3">
-            {timelineSteps.map((step) => (
-              <div
-                key={step}
-                className="text-center w-100"
-              >
-                <div
-                  className={`rounded-circle mx-auto mb-1 ${
-                    timelineSteps.indexOf(step) <=
-                    timelineSteps.indexOf(
-                      order.status
-                    )
-                      ? "bg-success"
-                      : "bg-secondary"
-                  }`}
-                  style={{
-                    width: 12,
-                    height: 12,
-                  }}
-                />
-                <small>{step}</small>
+                <span
+                  className={`badge px-3 py-2 ${statusBadge(
+                    order.status
+                  )}`}
+                >
+                  {order.status}
+                </span>
               </div>
-            ))}
+
+              <hr />
+
+              {/* PRODUCTS */}
+              <div className="mb-3">
+                {order.items?.map((item, idx) => (
+                  <div
+                    key={idx}
+                    className="d-flex justify-content-between border-bottom py-2"
+                  >
+                    <div>
+                      <strong>{item.product?.name}</strong>
+                      <small className="text-muted d-block">
+                        Qty: {item.quantity}
+                      </small>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* TOTAL */}
+              <div className="fw-bold mb-4">
+                Total: ₹{order.totalAmount}
+              </div>
+
+              {/* TIMELINE */}
+              {order.status !== "Cancelled" && (
+                <div className="position-relative">
+                  {/* Line */}
+                  <div
+                    className="position-absolute top-50 start-0 w-100"
+                    style={{
+                      height: "3px",
+                      background: "#e9ecef",
+                      zIndex: 0,
+                    }}
+                  />
+
+                  <div className="d-flex justify-content-between position-relative">
+                    {timelineSteps.map((step, index) => (
+                      <div
+                        key={step.label}
+                        className="text-center"
+                        style={{ width: "25%" }}
+                      >
+                        <div
+                          className={`mx-auto mb-2 d-flex align-items-center justify-content-center rounded-circle ${
+                            index <= currentIndex
+                              ? "bg-success text-white"
+                              : "bg-secondary text-white"
+                          }`}
+                          style={{
+                            width: 36,
+                            height: 36,
+                            zIndex: 2,
+                            position: "relative",
+                          }}
+                        >
+                          {step.icon}
+                        </div>
+
+                        <small className="fw-semibold">
+                          {step.label}
+                        </small>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {order.status === "Cancelled" && (
+                <div className="alert alert-danger mt-3 mb-0">
+                  This order was cancelled.
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 };

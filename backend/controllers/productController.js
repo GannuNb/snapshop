@@ -1,29 +1,120 @@
 import Product from "../models/productModel.js";
 
+import PendingProduct from "../models/pendingProductModel.js";
+
 export const createProduct = async (req, res) => {
   try {
     const { name, description, price, stock, category } = req.body;
 
     if (!name || !description || !price || !category) {
-      return res.status(400).json({ message: "All fields are required" });
+      return res.status(400).json({ message: "All fields required" });
     }
 
-    const product = await Product.create({
+    const productData = {
       seller: req.user._id,
       name,
       description,
       price,
       stock: stock || 0,
       category,
-    });
+    };
 
-    res.status(201).json(product);
+    // ⭐ IMAGE SAVE
+    if (req.file) {
+      productData.image = {
+        data: req.file.buffer,
+        contentType: req.file.mimetype,
+      };
+    }
+
+    const product = await PendingProduct.create(productData);
+
+    res.status(201).json({
+      message: "Product submitted for approval",
+      product,
+    });
   } catch (error) {
-    console.error("PRODUCT CREATE ERROR:", error);
     res.status(500).json({ message: error.message });
   }
 };
 
+
+
+export const getPendingProducts = async (req, res) => {
+  try {
+    const products = await PendingProduct.find({})
+      .populate("seller", "name email")
+      .populate("category", "name")
+      .sort({ createdAt: -1 });
+
+    res.json(products);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+
+export const approveProduct = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const pending = await PendingProduct.findById(id);
+
+    if (!pending) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    // create real product
+    const product = await Product.create({
+      seller: pending.seller,
+      name: pending.name,
+      description: pending.description,
+      price: pending.price,
+      stock: pending.stock,
+      category: pending.category,
+    });
+
+    // remove pending entry
+    await pending.deleteOne();
+
+    res.json({ message: "Product approved", product });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const rejectProduct = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const pending = await PendingProduct.findById(id);
+
+    if (!pending) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    // DELETE rejected product from pending list
+    await pending.deleteOne();
+
+    res.json({ message: "Product rejected successfully" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const getSellerProducts = async (req, res) => {
+  try {
+    const products = await Product.find({
+      seller: req.user._id,
+    })
+      .populate("category", "name")
+      .sort({ createdAt: -1 });
+
+    res.json(products);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
 
 
 /* GET PRODUCTS WITH PAGINATION */

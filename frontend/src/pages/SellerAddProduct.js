@@ -8,7 +8,9 @@ const SellerAddProduct = () => {
 
   const { categories } = useSelector((state) => state.category);
   const { user } = useSelector((state) => state.auth);
-  const { isLoading, isError, message } = useSelector(
+
+  // ⚠️ IMPORTANT → success (not isSuccess)
+  const { isLoading, isError, success, message } = useSelector(
     (state) => state.product
   );
 
@@ -19,14 +21,15 @@ const SellerAddProduct = () => {
     category: "",
   });
 
+  /* FETCH CATEGORIES */
   useEffect(() => {
     dispatch(fetchCategories());
   }, [dispatch]);
 
+  /* SUBMIT FORM */
   const submitHandler = (e) => {
     e.preventDefault();
 
-    // ✅ Frontend validation
     if (!form.name || !form.description || !form.price || !form.category) {
       alert("All fields are required");
       return;
@@ -43,65 +46,104 @@ const SellerAddProduct = () => {
     );
   };
 
+  /* HANDLE SUCCESS + ERROR */
   useEffect(() => {
     if (isError) {
       alert(message);
       dispatch(resetProductState());
     }
-  }, [isError, message, dispatch]);
+
+    if (success) {
+      alert("✅ Product added successfully!");
+
+      // CLEAR FORM
+      setForm({
+        name: "",
+        description: "",
+        price: "",
+        category: "",
+      });
+
+      dispatch(resetProductState());
+    }
+  }, [isError, success, message, dispatch]);
 
   return (
-    <div className="container mt-4">
-      <h3>Seller – Add Product</h3>
+    <div className="container py-4">
 
-      <form onSubmit={submitHandler}>
-        <input
-          className="form-control mb-2"
-          placeholder="Product name"
-          value={form.name}
-          onChange={(e) =>
-            setForm({ ...form, name: e.target.value })
-          }
-        />
+      <h3 className="fw-bold text-primary mb-4">Add New Product</h3>
 
-        <textarea
-          className="form-control mb-2"
-          placeholder="Product description"
-          value={form.description}
-          onChange={(e) =>
-            setForm({ ...form, description: e.target.value })
-          }
-        />
+      <div className="card shadow-sm border-0 rounded-4 p-4">
+        <form onSubmit={submitHandler}>
 
-        <input
-          type="number"
-          className="form-control mb-2"
-          placeholder="Price"
-          value={form.price}
-          onChange={(e) =>
-            setForm({ ...form, price: e.target.value })
-          }
-        />
+          {/* PRODUCT NAME */}
+          <div className="mb-3">
+            <label className="form-label fw-semibold">Product Name</label>
+            <input
+              className="form-control"
+              placeholder="Enter product name"
+              value={form.name}
+              onChange={(e) =>
+                setForm({ ...form, name: e.target.value })
+              }
+            />
+          </div>
 
-        <select
-          className="form-select mb-2"
-          value={form.category}
-          onChange={(e) =>
-            setForm({ ...form, category: e.target.value })
-          }
-        >
-          <option value="">Select category</option>
-          {categories.map((c) => (
-            <option key={c._id} value={c._id}>
-              {c.name}
-            </option>
-          ))}
-        </select>
+          {/* DESCRIPTION */}
+          <div className="mb-3">
+            <label className="form-label fw-semibold">Description</label>
+            <textarea
+              className="form-control"
+              rows="4"
+              placeholder="Product description"
+              value={form.description}
+              onChange={(e) =>
+                setForm({ ...form, description: e.target.value })
+              }
+            />
+          </div>
 
-        <button className="btn btn-primary" disabled={isLoading}>
-          {isLoading ? "Adding..." : "Add Product"}
-        </button>
-      </form>
+          {/* PRICE */}
+          <div className="mb-3">
+            <label className="form-label fw-semibold">Price (₹)</label>
+            <input
+              type="number"
+              className="form-control"
+              placeholder="Enter price"
+              value={form.price}
+              onChange={(e) =>
+                setForm({ ...form, price: e.target.value })
+              }
+            />
+          </div>
+
+          {/* CATEGORY */}
+          <div className="mb-4">
+            <label className="form-label fw-semibold">Category</label>
+            <select
+              className="form-select"
+              value={form.category}
+              onChange={(e) =>
+                setForm({ ...form, category: e.target.value })
+              }
+            >
+              <option value="">Select category</option>
+              {categories.map((c) => (
+                <option key={c._id} value={c._id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* BUTTON */}
+          <button className="btn btn-primary px-4" disabled={isLoading}>
+            {isLoading ? "Adding..." : "Add Product"}
+          </button>
+
+        </form>
+      </div>
+
     </div>
   );
 };
