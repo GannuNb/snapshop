@@ -6,6 +6,8 @@ import {
   rejectProduct,
 } from "../redux/slices/adminProductSlice";
 
+const API_URL = "http://127.0.0.1:5000/api/products";
+
 const AdminPendingProducts = () => {
   const dispatch = useDispatch();
 
@@ -15,18 +17,25 @@ const AdminPendingProducts = () => {
 
   const { user } = useSelector((state) => state.auth);
 
+  /* LOAD PENDING PRODUCTS */
   useEffect(() => {
-    dispatch(fetchPendingProducts(user.token));
-  }, [dispatch, user.token]);
+    if (user?.token) {
+      dispatch(fetchPendingProducts(user.token));
+    }
+  }, [dispatch, user?.token]);
 
+  /* APPROVE */
   const handleApprove = (id) => {
-    dispatch(approveProduct({ id, token: user.token }))
-      .then(() => dispatch(fetchPendingProducts(user.token)));
+    dispatch(approveProduct({ id, token: user.token })).then(() =>
+      dispatch(fetchPendingProducts(user.token))
+    );
   };
 
+  /* REJECT */
   const handleReject = (id) => {
-    dispatch(rejectProduct({ id, token: user.token }))
-      .then(() => dispatch(fetchPendingProducts(user.token)));
+    dispatch(rejectProduct({ id, token: user.token })).then(() =>
+      dispatch(fetchPendingProducts(user.token))
+    );
   };
 
   return (
@@ -42,36 +51,56 @@ const AdminPendingProducts = () => {
       ) : (
         <div className="row">
           {pendingProducts.map((p) => (
-            <div key={p._id} className="col-md-6 mb-3">
-              <div className="card shadow-sm border-0 rounded-4 p-3">
+            <div key={p._id} className="col-md-6 col-lg-4 mb-4">
+              <div className="card shadow-sm border-0 rounded-4 overflow-hidden h-100">
 
-                <h5 className="fw-bold">{p.name}</h5>
-                <p className="text-muted">{p.description}</p>
+             {p.image && (
+                    <img
+                      src={p.image}
+                      alt={p.name}
+                      className="w-100"
+                      style={{
+                        height: "220px",
+                        objectFit: "cover",
+                        background: "#f5f5f5",
+                      }}
+                    />
+                  )}
 
-                <p className="mb-1">
-                  <strong>Seller:</strong> {p.seller?.name}
-                </p>
 
-                <p className="mb-3">
-                  <strong>Price:</strong> ₹{p.price}
-                </p>
+                <div className="p-3">
 
-                <div className="d-flex gap-2">
-                  <button
-                    className="btn btn-success"
-                    onClick={() => handleApprove(p._id)}
-                  >
-                    Approve
-                  </button>
+                  <h5 className="fw-bold mb-2">{p.name}</h5>
 
-                  <button
-                    className="btn btn-danger"
-                    onClick={() => handleReject(p._id)}
-                  >
-                    Reject
-                  </button>
+                  <p className="text-muted small mb-2">
+                    {p.description}
+                  </p>
+
+                  <p className="mb-1">
+                    <strong>Seller:</strong> {p.seller?.name}
+                  </p>
+
+                  <p className="mb-3">
+                    <strong>Price:</strong> ₹{p.price}
+                  </p>
+
+                  <div className="d-flex gap-2">
+                    <button
+                      className="btn btn-success flex-fill"
+                      onClick={() => handleApprove(p._id)}
+                    >
+                      Approve
+                    </button>
+
+                    <button
+                      className="btn btn-danger flex-fill"
+                      onClick={() => handleReject(p._id)}
+                    >
+                      Reject
+                    </button>
+                  </div>
+
                 </div>
-
               </div>
             </div>
           ))}

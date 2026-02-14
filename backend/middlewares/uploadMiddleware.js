@@ -1,8 +1,20 @@
 import multer from "multer";
 
-// memory storage (NO FOLDER)
+// ⭐ STORE FILE IN MEMORY (NOT DISK)
 const storage = multer.memoryStorage();
 
-const upload = multer({ storage });
+// OPTIONAL: image only filter
+const fileFilter = (req, file, cb) => {
+  if (file.mimetype.startsWith("image/")) {
+    cb(null, true);
+  } else {
+    cb(new Error("Only images allowed"), false);
+  }
+};
+
+const upload = multer({
+  storage,
+  fileFilter,
+});
 
 export default upload;

@@ -3,6 +3,9 @@ import { createProduct, getProducts ,getPendingProducts,approveProduct,rejectPro
 import protect from "../middlewares/authMiddleware.js";
 import authorizeRoles from "../middlewares/roleMiddleware.js";
 import { getProductById } from "../controllers/productController.js";
+import upload from "../middlewares/uploadMiddleware.js";
+import { getProductImage } from "../controllers/productController.js";
+
 
 const router = express.Router();
 
@@ -23,11 +26,16 @@ router.post(
   "/",
   protect,
   authorizeRoles("seller"),
+  upload.single("image"), // ⭐ IMPORTANT
   createProduct
 );
 
+
 /* BUYER */
 router.get("/", getProducts);
+
+router.get("/image/:id", getProductImage);
+
 
 /* SINGLE PRODUCT (ALWAYS LAST) */
 router.get("/:id", getProductById);

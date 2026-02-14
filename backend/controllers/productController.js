@@ -1,6 +1,8 @@
 import Product from "../models/productModel.js";
 
 import PendingProduct from "../models/pendingProductModel.js";
+import { formatImage } from "../utils/imageHelper.js";
+
 
 export const createProduct = async (req, res) => {
   try {
@@ -47,11 +49,40 @@ export const getPendingProducts = async (req, res) => {
       .populate("category", "name")
       .sort({ createdAt: -1 });
 
-    res.json(products);
+    const formattedProducts = products.map((p) => {
+      const obj = p.toObject();
+
+      obj.image = formatImage(obj.image);
+
+      return obj;
+    });
+
+    res.json(formattedProducts);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
+
+
+export const getProductImage = async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id);
+
+    if (!product || !product.image?.data) {
+      return res.status(404).send("Image not found");
+    }
+
+    res.set("Content-Type", product.image.contentType);
+
+    // ⭐ IMPORTANT: browser caching
+    res.set("Cache-Control", "public, max-age=86400");
+
+    res.send(product.image.data);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 
 
 export const approveProduct = async (req, res) => {
@@ -64,7 +95,7 @@ export const approveProduct = async (req, res) => {
       return res.status(404).json({ message: "Product not found" });
     }
 
-    // create real product
+    // ⭐ CREATE PRODUCT
     const product = await Product.create({
       seller: pending.seller,
       name: pending.name,
@@ -72,16 +103,21 @@ export const approveProduct = async (req, res) => {
       price: pending.price,
       stock: pending.stock,
       category: pending.category,
+      image: pending.image,
     });
 
-    // remove pending entry
-    await pending.deleteOne();
+    // DELETE ONLY AFTER SUCCESS
+    await PendingProduct.findByIdAndDelete(id);
 
-    res.json({ message: "Product approved", product });
+    res.json({
+      message: "Product approved successfully",
+      product,
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
+
 
 export const rejectProduct = async (req, res) => {
   try {
@@ -104,18 +140,28 @@ export const rejectProduct = async (req, res) => {
 
 export const getSellerProducts = async (req, res) => {
   try {
-    const products = await Product.find({
+    /* APPROVED PRODUCTS */
+    const approved = await Product.find({
       seller: req.user._id,
     })
       .populate("category", "name")
       .sort({ createdAt: -1 });
 
-    res.json(products);
+    /* PENDING PRODUCTS */
+    const pending = await PendingProduct.find({
+      seller: req.user._id,
+    })
+      .populate("category", "name")
+      .sort({ createdAt: -1 });
+
+    res.json({
+      approved,
+      pending,
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
-
 
 /* GET PRODUCTS WITH PAGINATION */
 export const getProducts = async (req, res) => {

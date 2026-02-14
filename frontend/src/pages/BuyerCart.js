@@ -7,6 +7,8 @@ import {
 } from "../redux/slices/cartSlice";
 import { placeOrder, resetOrderState } from "../redux/slices/orderSlice";
 
+const API_URL = "http://127.0.0.1:5000/api/products";
+
 const BuyerCart = () => {
   const dispatch = useDispatch();
 
@@ -16,12 +18,12 @@ const BuyerCart = () => {
 
   const [paymentMethod, setPaymentMethod] = useState("COD");
 
-  /* Load cart */
+  /* LOAD CART */
   useEffect(() => {
     dispatch(fetchCart(user.token));
   }, [dispatch, user.token]);
 
-  /* After order placed */
+  /* AFTER ORDER */
   useEffect(() => {
     if (success) {
       alert(`Order placed successfully via ${paymentMethod}`);
@@ -30,7 +32,7 @@ const BuyerCart = () => {
     }
   }, [success, dispatch, user.token, paymentMethod]);
 
-  /* Calculate total */
+  /* TOTAL */
   const totalAmount = items.reduce(
     (sum, item) =>
       sum +
@@ -41,7 +43,7 @@ const BuyerCart = () => {
 
   return (
     <div className="container mt-4">
-      <h3>Your Cart</h3>
+      <h3 className="fw-bold mb-4">Your Cart</h3>
 
       {isLoading && <p>Loading cart...</p>}
 
@@ -52,15 +54,39 @@ const BuyerCart = () => {
       {items.map((item) => (
         <div
           key={item.product._id}
-          className="card mb-3 p-3 shadow-sm"
+          className="card mb-3 shadow-sm border-0 rounded-4 overflow-hidden"
         >
-          <div className="row align-items-center">
-            <div className="col-md-5">
-              <h6>{item.product?.name}</h6>
-              <p>₹{item.product?.price}</p>
+          <div className="row g-0 align-items-center">
+
+            {/* ⭐ LEFT SIDE IMAGE */}
+            <div className="col-md-2">
+              <img
+                src={`${API_URL}/image/${item.product._id}`}
+                alt={item.product?.name}
+                className="w-100"
+                style={{
+                  height: "120px",
+                  objectFit: "cover",
+                  background: "#f5f5f5",
+                }}
+                onError={(e) => {
+                  e.target.style.display = "none";
+                }}
+              />
             </div>
 
-            <div className="col-md-4 d-flex align-items-center">
+            {/* PRODUCT INFO */}
+            <div className="col-md-4 p-3">
+              <h6 className="fw-bold mb-1">
+                {item.product?.name}
+              </h6>
+              <p className="mb-0 text-success fw-semibold">
+                ₹{item.product?.price}
+              </p>
+            </div>
+
+            {/* QUANTITY */}
+            <div className="col-md-3 d-flex align-items-center justify-content-center">
               <button
                 className="btn btn-sm btn-outline-secondary"
                 disabled={item.quantity <= 1}
@@ -77,7 +103,7 @@ const BuyerCart = () => {
                 −
               </button>
 
-              <span className="mx-2">
+              <span className="mx-3 fw-bold">
                 {item.quantity}
               </span>
 
@@ -97,7 +123,8 @@ const BuyerCart = () => {
               </button>
             </div>
 
-            <div className="col-md-3 text-end">
+            {/* REMOVE */}
+            <div className="col-md-3 text-end p-3">
               <button
                 className="btn btn-sm btn-outline-danger"
                 onClick={() =>
@@ -112,10 +139,12 @@ const BuyerCart = () => {
                 Remove
               </button>
             </div>
+
           </div>
         </div>
       ))}
 
+      {/* ORDER SECTION */}
       {items.length > 0 && (
         <div className="mt-4">
           <h5>Total Amount: ₹{totalAmount}</h5>

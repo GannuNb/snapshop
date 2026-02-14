@@ -11,6 +11,7 @@ const pendingProductSchema = new mongoose.Schema(
     name: String,
     description: String,
     price: Number,
+
     stock: {
       type: Number,
       default: 0,
@@ -19,6 +20,12 @@ const pendingProductSchema = new mongoose.Schema(
     category: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Category",
+    },
+
+    // ⭐ IMAGE FIELD (BINARY STORAGE)
+    image: {
+      data: Buffer,
+      contentType: String,
     },
 
     status: {

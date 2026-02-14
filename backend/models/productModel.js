@@ -34,11 +34,11 @@ const productSchema = new mongoose.Schema(
       required: true,
     },
 
-    images: [
-      {
-        type: String,
+      image: {
+        data: Buffer,
+        contentType: String,
       },
-    ],
+
 
     isActive: {
       type: Boolean,

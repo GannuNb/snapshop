@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import productService from "../../services/productService";
 
-/* ================= FETCH PRODUCTS (PAGINATION) ================= */
+/* ================= BUYER FETCH PRODUCTS ================= */
 export const fetchProducts = createAsyncThunk(
   "product/fetch",
   async ({ page }, thunkAPI) => {
@@ -15,7 +15,7 @@ export const fetchProducts = createAsyncThunk(
   }
 );
 
-/* ================= ADD PRODUCT (SELLER) ================= */
+/* ================= SELLER ADD PRODUCT ================= */
 export const addProduct = createAsyncThunk(
   "product/add",
   async ({ data, token }, thunkAPI) => {
@@ -29,6 +29,7 @@ export const addProduct = createAsyncThunk(
   }
 );
 
+/* ================= SELLER FETCH PRODUCTS ================= */
 export const fetchSellerProducts = createAsyncThunk(
   "product/fetchSellerProducts",
   async (token, thunkAPI) => {
@@ -36,24 +37,34 @@ export const fetchSellerProducts = createAsyncThunk(
       return await productService.getSellerProducts(token);
     } catch (error) {
       return thunkAPI.rejectWithValue(
-        error.response?.data?.message || "Failed to load seller products"
+        error.response?.data?.message ||
+          "Failed to load seller products"
       );
     }
   }
 );
 
-
 const productSlice = createSlice({
   name: "product",
   initialState: {
+    /* BUYER */
     products: [],
     page: 1,
     totalPages: 1,
-    isLoading: false,
+
+    /* SELLER */
+    approvedProducts: [],
+    pendingProducts: [],
+
+    /* LOADERS */
+    buyerLoading: false,
+    sellerLoading: false,
+
     isError: false,
     success: false,
     message: "",
   },
+
   reducers: {
     resetProductState: (state) => {
       state.isError = false;
@@ -61,52 +72,54 @@ const productSlice = createSlice({
       state.message = "";
     },
   },
+
   extraReducers: (builder) => {
     builder
-      /* FETCH PRODUCTS */
+
+      /* ===== BUYER ===== */
       .addCase(fetchProducts.pending, (state) => {
-        state.isLoading = true;
+        state.buyerLoading = true;
       })
       .addCase(fetchProducts.fulfilled, (state, action) => {
-        state.isLoading = false;
+        state.buyerLoading = false;
         state.products = action.payload.products;
         state.page = action.payload.page;
         state.totalPages = action.payload.totalPages;
       })
       .addCase(fetchProducts.rejected, (state, action) => {
-        state.isLoading = false;
+        state.buyerLoading = false;
         state.isError = true;
         state.message = action.payload;
       })
 
-      /* ADD PRODUCT */
+      /* ===== ADD PRODUCT ===== */
       .addCase(addProduct.pending, (state) => {
-        state.isLoading = true;
+        state.sellerLoading = true;
       })
       .addCase(addProduct.fulfilled, (state) => {
-        state.isLoading = false;
+        state.sellerLoading = false;
         state.success = true;
       })
       .addCase(addProduct.rejected, (state, action) => {
-        state.isLoading = false;
+        state.sellerLoading = false;
         state.isError = true;
         state.message = action.payload;
       })
 
-      /* FETCH SELLER PRODUCTS */
-.addCase(fetchSellerProducts.pending, (state) => {
-  state.isLoading = true;
-})
-.addCase(fetchSellerProducts.fulfilled, (state, action) => {
-  state.isLoading = false;
-  state.products = action.payload;
-})
-.addCase(fetchSellerProducts.rejected, (state, action) => {
-  state.isLoading = false;
-  state.isError = true;
-  state.message = action.payload;
-});
-
+      /* ===== SELLER FETCH ===== */
+      .addCase(fetchSellerProducts.pending, (state) => {
+        state.sellerLoading = true;
+      })
+      .addCase(fetchSellerProducts.fulfilled, (state, action) => {
+        state.sellerLoading = false;
+        state.approvedProducts = action.payload.approved;
+        state.pendingProducts = action.payload.pending;
+      })
+      .addCase(fetchSellerProducts.rejected, (state, action) => {
+        state.sellerLoading = false;
+        state.isError = true;
+        state.message = action.payload;
+      });
   },
 });
 

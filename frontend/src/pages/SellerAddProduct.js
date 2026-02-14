@@ -9,16 +9,20 @@ const SellerAddProduct = () => {
   const { categories } = useSelector((state) => state.category);
   const { user } = useSelector((state) => state.auth);
 
-  // ⚠️ IMPORTANT → success (not isSuccess)
-  const { isLoading, isError, success, message } = useSelector(
-    (state) => state.product
-  );
+  /* ⭐ IMPORTANT — use sellerLoading */
+  const {
+    sellerLoading,
+    isError,
+    success,
+    message,
+  } = useSelector((state) => state.product);
 
   const [form, setForm] = useState({
     name: "",
     description: "",
     price: "",
     category: "",
+    image: null,
   });
 
   /* FETCH CATEGORIES */
@@ -30,17 +34,28 @@ const SellerAddProduct = () => {
   const submitHandler = (e) => {
     e.preventDefault();
 
-    if (!form.name || !form.description || !form.price || !form.category) {
+    if (
+      !form.name ||
+      !form.description ||
+      !form.price ||
+      !form.category ||
+      !form.image
+    ) {
       alert("All fields are required");
       return;
     }
 
+    const formData = new FormData();
+
+    formData.append("name", form.name);
+    formData.append("description", form.description);
+    formData.append("price", form.price);
+    formData.append("category", form.category);
+    formData.append("image", form.image);
+
     dispatch(
       addProduct({
-        data: {
-          ...form,
-          price: Number(form.price),
-        },
+        data: formData,
         token: user.token,
       })
     );
@@ -56,12 +71,12 @@ const SellerAddProduct = () => {
     if (success) {
       alert("✅ Product added successfully!");
 
-      // CLEAR FORM
       setForm({
         name: "",
         description: "",
         price: "",
         category: "",
+        image: null,
       });
 
       dispatch(resetProductState());
@@ -70,15 +85,18 @@ const SellerAddProduct = () => {
 
   return (
     <div className="container py-4">
-
-      <h3 className="fw-bold text-primary mb-4">Add New Product</h3>
+      <h3 className="fw-bold text-primary mb-4">
+        Add New Product
+      </h3>
 
       <div className="card shadow-sm border-0 rounded-4 p-4">
         <form onSubmit={submitHandler}>
 
           {/* PRODUCT NAME */}
           <div className="mb-3">
-            <label className="form-label fw-semibold">Product Name</label>
+            <label className="form-label fw-semibold">
+              Product Name
+            </label>
             <input
               className="form-control"
               placeholder="Enter product name"
@@ -91,21 +109,28 @@ const SellerAddProduct = () => {
 
           {/* DESCRIPTION */}
           <div className="mb-3">
-            <label className="form-label fw-semibold">Description</label>
+            <label className="form-label fw-semibold">
+              Description
+            </label>
             <textarea
               className="form-control"
               rows="4"
               placeholder="Product description"
               value={form.description}
               onChange={(e) =>
-                setForm({ ...form, description: e.target.value })
+                setForm({
+                  ...form,
+                  description: e.target.value,
+                })
               }
             />
           </div>
 
           {/* PRICE */}
           <div className="mb-3">
-            <label className="form-label fw-semibold">Price (₹)</label>
+            <label className="form-label fw-semibold">
+              Price (₹)
+            </label>
             <input
               type="number"
               className="form-control"
@@ -117,9 +142,29 @@ const SellerAddProduct = () => {
             />
           </div>
 
+          {/* IMAGE */}
+          <div className="mb-3">
+            <label className="form-label fw-semibold">
+              Product Image
+            </label>
+            <input
+              type="file"
+              className="form-control"
+              accept="image/*"
+              onChange={(e) =>
+                setForm({
+                  ...form,
+                  image: e.target.files[0],
+                })
+              }
+            />
+          </div>
+
           {/* CATEGORY */}
           <div className="mb-4">
-            <label className="form-label fw-semibold">Category</label>
+            <label className="form-label fw-semibold">
+              Category
+            </label>
             <select
               className="form-select"
               value={form.category}
@@ -137,13 +182,15 @@ const SellerAddProduct = () => {
           </div>
 
           {/* BUTTON */}
-          <button className="btn btn-primary px-4" disabled={isLoading}>
-            {isLoading ? "Adding..." : "Add Product"}
+          <button
+            className="btn btn-primary px-4"
+            disabled={sellerLoading}
+          >
+            {sellerLoading ? "Adding..." : "Add Product"}
           </button>
 
         </form>
       </div>
-
     </div>
   );
 };
