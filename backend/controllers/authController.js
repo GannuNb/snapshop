@@ -79,3 +79,123 @@ export const loginUser = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+
+
+
+/* GET SAVED ADDRESSES */
+export const getMyAddresses = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id).select("savedAddresses");
+    res.json(user.savedAddresses);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+/* ADD NEW ADDRESS */
+export const addAddress = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+
+    const newAddress = req.body;
+
+    // ⭐ CHECK DUPLICATE
+    const exists = user.savedAddresses.find(
+      (a) =>
+        a.fullName === newAddress.fullName &&
+        a.phone === newAddress.phone &&
+        a.addressLine === newAddress.addressLine &&
+        a.city === newAddress.city &&
+        a.state === newAddress.state &&
+        a.pincode === newAddress.pincode
+    );
+
+    if (!exists) {
+      // remove default from old addresses
+      user.savedAddresses.forEach((a) => (a.isDefault = false));
+
+      // add new as default
+      user.savedAddresses.push({
+        ...newAddress,
+        isDefault: true,
+      });
+    }
+
+    await user.save();
+
+    res.status(201).json(user.savedAddresses);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+
+
+/* EDIT ADDRESS */
+export const updateAddress = async (req, res) => {
+  try {
+    const { addressId } = req.params;
+    const user = await User.findById(req.user._id);
+
+    const addr = user.savedAddresses.id(addressId);
+    if (!addr) return res.status(404).json({ message: "Address not found" });
+
+    Object.assign(addr, req.body);
+
+    await user.save();
+
+    res.json(user.savedAddresses);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+/* DELETE ADDRESS */
+export const deleteAddress = async (req, res) => {
+  try {
+    const { addressId } = req.params;
+    const user = await User.findById(req.user._id);
+
+    // ❌ prevent deleting last address
+    if (user.savedAddresses.length <= 1) {
+      return res
+        .status(400)
+        .json({ message: "At least one address is required" });
+    }
+
+    user.savedAddresses = user.savedAddresses.filter(
+      (a) => a._id.toString() !== addressId
+    );
+
+    // ensure one default
+    const hasDefault = user.savedAddresses.some((a) => a.isDefault);
+    if (!hasDefault) user.savedAddresses[0].isDefault = true;
+
+    await user.save();
+
+    res.json(user.savedAddresses);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+
+/* SET DEFAULT ADDRESS */
+export const setDefaultAddress = async (req, res) => {
+  try {
+    const { addressId } = req.params;
+    const user = await User.findById(req.user._id);
+
+    user.savedAddresses.forEach((a) => {
+      a.isDefault = a._id.toString() === addressId;
+    });
+
+    await user.save();
+
+    res.json(user.savedAddresses);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+

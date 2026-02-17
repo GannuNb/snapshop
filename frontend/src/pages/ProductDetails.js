@@ -5,16 +5,32 @@ import axios from "axios";
 
 const API_URL = "http://localhost:5000/api/products";
 
+const emptyAddress = {
+  fullName: "",
+  phone: "",
+  addressLine: "",
+  city: "",
+  state: "",
+  pincode: "",
+  country: "India",
+};
+
 const ProductDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-
   const { user } = useSelector((state) => state.auth);
 
   const [product, setProduct] = useState(null);
-  const [qty, setQty] = useState(1);
+  const [qty, setQty] = useState(1); // ⭐ QTY RESTORED
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  const [savedAddresses, setSavedAddresses] = useState([]);
+  const [selectedAddressIndex, setSelectedAddressIndex] = useState(0);
+  const [address, setAddress] = useState(emptyAddress);
+
+  const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState(null);
 
   /* FETCH PRODUCT */
   useEffect(() => {
@@ -32,6 +48,108 @@ const ProductDetails = () => {
     fetchProduct();
   }, [id]);
 
+  /* LOAD ADDRESSES */
+  const loadAddresses = async () => {
+    try {
+      const res = await axios.get("http://localhost:5000/api/auth/addresses", {
+        headers: { Authorization: `Bearer ${user.token}` },
+      });
+
+      setSavedAddresses(res.data);
+
+      const defaultIndex = res.data.findIndex((a) => a.isDefault);
+
+      if (res.data.length > 0) {
+        const index = defaultIndex !== -1 ? defaultIndex : 0;
+        setSelectedAddressIndex(index);
+        setAddress(res.data[index]);
+      }
+    } catch {
+      console.log("Address load failed");
+    }
+  };
+
+  useEffect(() => {
+    if (user) loadAddresses();
+  }, [user]);
+
+  /* INPUT CHANGE */
+  const handleAddressChange = (e) => {
+    setAddress({ ...address, [e.target.name]: e.target.value });
+  };
+
+  /* ADD NEW ADDRESS */
+  const addNewAddressHandler = () => {
+    setAddress(emptyAddress);
+    setEditingId(null);
+    setShowForm(true);
+  };
+
+  /* EDIT ADDRESS */
+  const editAddressHandler = (addr) => {
+    setAddress(addr);
+    setEditingId(addr._id);
+    setShowForm(true);
+  };
+
+  /* SAVE ADDRESS */
+  const saveAddressHandler = async () => {
+    try {
+      if (editingId) {
+        await axios.put(
+          `http://localhost:5000/api/auth/addresses/${editingId}`,
+          address,
+          { headers: { Authorization: `Bearer ${user.token}` } }
+        );
+      } else {
+        await axios.post(
+          "http://localhost:5000/api/auth/addresses",
+          address,
+          { headers: { Authorization: `Bearer ${user.token}` } }
+        );
+      }
+
+      setShowForm(false);
+      setEditingId(null);
+      loadAddresses();
+    } catch {
+      alert("Address save failed");
+    }
+  };
+
+  /* DELETE ADDRESS */
+  const deleteAddressHandler = async (id) => {
+    try {
+      await axios.delete(
+        `http://localhost:5000/api/auth/addresses/${id}`,
+        {
+          headers: { Authorization: `Bearer ${user.token}` },
+        }
+      );
+
+      loadAddresses();
+    } catch (err) {
+      alert(err.response?.data?.message || "Delete failed");
+    }
+  };
+
+  /* SELECT DEFAULT ADDRESS */
+  const selectAddressHandler = async (addr, index) => {
+    try {
+      await axios.put(
+        `http://localhost:5000/api/auth/addresses/default/${addr._id}`,
+        {},
+        { headers: { Authorization: `Bearer ${user.token}` } }
+      );
+
+      setSelectedAddressIndex(index);
+      setAddress(addr);
+      loadAddresses();
+    } catch {
+      alert("Failed to set default");
+    }
+  };
+
   /* BUY NOW */
   const buyNowHandler = async () => {
     try {
@@ -39,12 +157,11 @@ const ProductDetails = () => {
         "http://localhost:5000/api/orders/buy-now",
         {
           productId: product._id,
-          quantity: qty,
+          quantity: qty, // ⭐ QTY INCLUDED
+          shippingAddress: address,
         },
         {
-          headers: {
-            Authorization: `Bearer ${user.token}`,
-          },
+          headers: { Authorization: `Bearer ${user.token}` },
         }
       );
 
@@ -59,47 +176,29 @@ const ProductDetails = () => {
 
   return (
     <div className="container mt-4">
-      <div className="card shadow-sm border-0 rounded-4 overflow-hidden">
+      <div className="card shadow-sm rounded-4 overflow-hidden">
         <div className="row g-0">
 
-          {/* ⭐ PRODUCT IMAGE */}
+          {/* PRODUCT IMAGE */}
           <div className="col-md-5">
             <img
               src={`${API_URL}/image/${product._id}`}
               alt={product.name}
               className="w-100 h-100"
-              style={{
-                objectFit: "cover",
-                minHeight: "350px",
-                background: "#f5f5f5",
-              }}
-              onError={(e) => {
-                e.target.style.display = "none";
-              }}
+              style={{ objectFit: "cover", minHeight: "350px" }}
             />
           </div>
 
           {/* PRODUCT DETAILS */}
           <div className="col-md-7 p-4">
-            <h3 className="fw-bold">{product.name}</h3>
+            <h3>{product.name}</h3>
+            <h4 className="text-success">₹{product.price}</h4>
 
-            <p className="text-muted mb-2">
-              Category: {product.category?.name}
-            </p>
-
-            <h4 className="text-success mb-3">
-              ₹{product.price}
-            </h4>
-
-            <p>{product.description}</p>
-
-            {/* QTY */}
-            <div className="d-flex align-items-center mb-3">
+            {/* ⭐ QTY SECTION */}
+            <div className="d-flex align-items-center my-3">
               <button
                 className="btn btn-outline-secondary"
-                onClick={() =>
-                  setQty((q) => Math.max(1, q - 1))
-                }
+                onClick={() => setQty((q) => Math.max(1, q - 1))}
               >
                 −
               </button>
@@ -114,16 +213,98 @@ const ProductDetails = () => {
               </button>
             </div>
 
+            <hr />
+
+            {/* ADDRESSES */}
+            <div className="d-flex justify-content-between mb-2">
+              <h5>Saved Addresses</h5>
+              <button
+                className="btn btn-sm btn-outline-primary"
+                onClick={addNewAddressHandler}
+              >
+                + Add New
+              </button>
+            </div>
+
+            {savedAddresses.map((addr, index) => (
+              <div key={addr._id} className="border rounded p-2 mb-2">
+                <input
+                  type="radio"
+                  checked={selectedAddressIndex === index}
+                  onChange={() => selectAddressHandler(addr, index)}
+                />
+
+                <span className="ms-2">
+                  {addr.fullName}, {addr.addressLine}, {addr.city}
+                </span>
+
+                <button
+                  className="btn btn-sm btn-link float-end"
+                  onClick={() => editAddressHandler(addr)}
+                >
+                  ✏️
+                </button>
+
+                <button
+                  className="btn btn-sm btn-link text-danger float-end"
+                  onClick={() => deleteAddressHandler(addr._id)}
+                >
+                  🗑
+                </button>
+              </div>
+            ))}
+
             <button
-              className="btn btn-success px-4"
+              className="btn btn-success mt-3"
               onClick={buyNowHandler}
+              disabled={!address?.fullName}
             >
               Buy Now
             </button>
           </div>
-
         </div>
       </div>
+
+      {/* MODAL FORM */}
+      {showForm && (
+        <div
+          className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
+          style={{ background: "rgba(0,0,0,0.5)", zIndex: 999 }}
+        >
+          <div className="bg-white p-4 rounded shadow" style={{ width: "400px" }}>
+            <h5>{editingId ? "Edit Address" : "Add Address"}</h5>
+
+            {["fullName","phone","addressLine","city","state","pincode"].map(
+              (field) => (
+                <input
+                  key={field}
+                  className="form-control mb-2"
+                  name={field}
+                  placeholder={field}
+                  value={address[field]}
+                  onChange={handleAddressChange}
+                />
+              )
+            )}
+
+            <div className="d-flex justify-content-end gap-2">
+              <button
+                className="btn btn-secondary btn-sm"
+                onClick={() => setShowForm(false)}
+              >
+                Cancel
+              </button>
+
+              <button
+                className="btn btn-primary btn-sm"
+                onClick={saveAddressHandler}
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

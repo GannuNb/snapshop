@@ -1,6 +1,7 @@
-import { useState,useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate, useLocation } from "react-router-dom";
+import { Collapse } from "bootstrap";
 import { logout } from "../redux/slices/authSlice";
 
 const RoleNavbar = () => {
@@ -9,24 +10,34 @@ const RoleNavbar = () => {
   const location = useLocation();
 
   const { user } = useSelector((state) => state.auth);
+
   const [showDropdown, setShowDropdown] = useState(false);
+  const collapseRef = useRef(null);
 
   const handleLogout = () => {
     dispatch(logout());
     navigate("/login");
   };
 
-    useEffect(() => {
+  // Redirect if no user
+  useEffect(() => {
     if (!user) {
       navigate("/login");
     }
   }, [user, navigate]);
 
+  // Close navbar collapse manually
+  const closeNavbar = () => {
+    if (collapseRef.current) {
+      const bsCollapse = Collapse.getInstance(collapseRef.current)
+        || new Collapse(collapseRef.current, { toggle: false });
+      bsCollapse.hide();
+    }
+    setShowDropdown(false);
+  };
 
-  // Hide navbar if no user
   if (!user) return null;
 
-  // 🔥 Links based on role
   const roleLinks = {
     buyer: [
       { name: "Home", path: "/" },
@@ -37,7 +48,7 @@ const RoleNavbar = () => {
     seller: [
       { name: "Dashboard", path: "/seller" },
       { name: "Add Product", path: "/seller/add-product" },
-      { name: "My-Products", path: "/seller/products" },
+      { name: "My Products", path: "/seller/products" },
       { name: "Orders", path: "/seller/orders" },
     ],
     admin: [
@@ -51,64 +62,90 @@ const RoleNavbar = () => {
   const links = roleLinks[user.role] || [];
 
   return (
-    <nav
-      className="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm px-5"
-      style={{ height: "68px" }}
-    >
-      {/* LOGO */}
-      <Link
-        to={user.role === "buyer" ? "/" : `/${user.role}`}
-        className="navbar-brand fw-bold text-white"
-        style={{ fontSize: "26px", letterSpacing: "1px" }}
-      >
-        Snap<span style={{ color: "#ffd700" }}>Shop</span>
-      </Link>
+    <nav className="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm px-lg-5 px-3">
+      <div className="container-fluid">
 
-      {/* NAV LINKS */}
-      <div className="ms-auto d-flex align-items-center gap-4">
-        {links.map((link, i) => (
-          <Link
-            key={i}
-            to={link.path}
-            className={`nav-link fw-semibold ${
-              location.pathname === link.path
-                ? "text-warning"
-                : "text-white"
-            }`}
-          >
-            {link.name}
-          </Link>
-        ))}
+        {/* LOGO */}
+        <Link
+          to={user.role === "buyer" ? "/" : `/${user.role}`}
+          className="navbar-brand fw-bold text-white"
+          style={{ fontSize: "24px", letterSpacing: "1px" }}
+          onClick={closeNavbar}
+        >
+          Snap<span style={{ color: "#ffd700" }}>Shop</span>
+        </Link>
 
-        {/* USER DROPDOWN */}
-        <div className="position-relative">
-          <button
-            className="btn btn-light fw-semibold px-3"
-            onClick={() => setShowDropdown(!showDropdown)}
-          >
-            👤 {user.name}
-          </button>
+        {/* TOGGLER */}
+        <button
+          className="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarContent"
+          aria-controls="navbarContent"
+          aria-expanded="false"
+          aria-label="Toggle navigation"
+        >
+          <span className="navbar-toggler-icon"></span>
+        </button>
 
-          {showDropdown && (
-            <div
-              className="position-absolute end-0 mt-2 bg-white rounded shadow p-2"
-              style={{ minWidth: "170px", zIndex: 1000 }}
-            >
-              <Link
-                to={`/${user.role}`}
-                className="dropdown-item"
-              >
-                Dashboard
-              </Link>
+        {/* COLLAPSIBLE CONTENT */}
+        <div
+          className="collapse navbar-collapse"
+          id="navbarContent"
+          ref={collapseRef}
+        >
+          <ul className="navbar-nav ms-auto align-items-lg-center gap-lg-4 mt-3 mt-lg-0">
 
+            {/* NAV LINKS */}
+            {links.map((link, i) => (
+              <li className="nav-item" key={i}>
+                <Link
+                  to={link.path}
+                  onClick={closeNavbar}
+                  className={`nav-link fw-semibold ${
+                    location.pathname === link.path
+                      ? "text-warning"
+                      : "text-white"
+                  }`}
+                >
+                  {link.name}
+                </Link>
+              </li>
+            ))}
+
+            {/* USER DROPDOWN */}
+            <li className="nav-item dropdown position-relative">
               <button
-                onClick={handleLogout}
-                className="dropdown-item text-danger"
+                className="btn btn-light fw-semibold px-3 mt-2 mt-lg-0"
+                onClick={() => setShowDropdown(!showDropdown)}
               >
-                Logout
+                👤 {user.name}
               </button>
-            </div>
-          )}
+
+              {showDropdown && (
+                <div
+                  className="dropdown-menu show mt-2"
+                  style={{ right: 0, left: "auto" }}
+                >
+                  <Link
+                    to={`/${user.role}`}
+                    className="dropdown-item"
+                    onClick={closeNavbar}
+                  >
+                    Dashboard
+                  </Link>
+
+                  <button
+                    onClick={handleLogout}
+                    className="dropdown-item text-danger"
+                  >
+                    Logout
+                  </button>
+                </div>
+              )}
+            </li>
+
+          </ul>
         </div>
       </div>
     </nav>

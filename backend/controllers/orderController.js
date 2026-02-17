@@ -1,11 +1,12 @@
 import Order from "../models/orderModel.js";
 import Cart from "../models/cartModel.js";
 import Product from "../models/productModel.js";
+import User from "../models/userModel.js";
 
 /* BUY NOW - DIRECT ORDER (NO CART) */
 export const buyNowOrder = async (req, res) => {
   try {
-    const { productId, quantity } = req.body;
+    const { productId, quantity, shippingAddress } = req.body;
 
     const product = await Product.findById(productId);
     if (!product) {
@@ -16,6 +17,9 @@ export const buyNowOrder = async (req, res) => {
 
     const order = await Order.create({
       user: req.user._id,
+
+      shippingAddress, // ⭐ SAVE ADDRESS HERE
+
       items: [
         {
           product: product._id,
@@ -48,6 +52,19 @@ export const placeOrder = async (req, res) => {
       return res.status(400).json({ message: "Cart is empty" });
     }
 
+    /* ⭐ GET DEFAULT ADDRESS */
+    const user = await User.findById(req.user._id);
+
+    const shippingAddress =
+      user.savedAddresses.find((a) => a.isDefault) ||
+      user.savedAddresses[0];
+
+    if (!shippingAddress) {
+      return res.status(400).json({
+        message: "Please add shipping address first",
+      });
+    }
+
     const items = cart.items.map((item) => ({
       product: item.product._id,
       quantity: item.quantity,
@@ -62,8 +79,10 @@ export const placeOrder = async (req, res) => {
 
     const order = await Order.create({
       user: req.user._id,
+      shippingAddress, // ⭐ FIXED
       items,
       totalAmount,
+      status: "Placed",
     });
 
     // clear cart
@@ -72,23 +91,22 @@ export const placeOrder = async (req, res) => {
 
     res.status(201).json(order);
   } catch (error) {
+    console.error("Place Order Error:", error);
     res.status(500).json({ message: error.message });
   }
 };
 
-
 export const getMyOrders = async (req, res) => {
   try {
-    const orders = await Order.find({ user: req.user._id }).sort({
-      createdAt: -1,
-    });
+    const orders = await Order.find({ user: req.user._id })
+      .populate("items.product", "name") // ⭐ add this
+      .sort({ createdAt: -1 });
 
     res.json(orders);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
-
 
 /* ================= SELLER ORDERS ================= */
 export const getSellerOrders = async (req, res) => {
@@ -108,7 +126,6 @@ export const getSellerOrders = async (req, res) => {
   }
 };
 
-
 /* SELLER UPDATE STATUS */
 export const sellerUpdateOrderStatus = async (req, res) => {
   try {
@@ -127,8 +144,7 @@ export const sellerUpdateOrderStatus = async (req, res) => {
 
     // Check seller owns at least one item
     const ownsProduct = order.items.some(
-      (item) =>
-        item.seller.toString() === req.user._id.toString()
+      (item) => item.seller.toString() === req.user._id.toString(),
     );
 
     if (!ownsProduct) {
@@ -143,7 +159,6 @@ export const sellerUpdateOrderStatus = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
-
 
 /* ADMIN UPDATE STATUS */
 export const adminUpdateOrderStatus = async (req, res) => {
@@ -184,5 +199,3 @@ export const getAllOrders = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
-
-

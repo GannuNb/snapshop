@@ -26,6 +26,20 @@ const userSchema = new mongoose.Schema(
       default: "buyer",
     },
 
+    /* ⭐ ADD THIS */
+    savedAddresses: [
+      {
+        fullName: String,
+        phone: String,
+        addressLine: String,
+        city: String,
+        state: String,
+        pincode: String,
+        country: { type: String, default: "India" },
+        isDefault: { type: Boolean, default: false },
+      },
+    ],
+
     isActive: {
       type: Boolean,
       default: true,
@@ -34,5 +48,4 @@ const userSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-const User = mongoose.model("User", userSchema);
-export default User;
+export default mongoose.model("User", userSchema);

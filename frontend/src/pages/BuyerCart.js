@@ -35,10 +35,8 @@ const BuyerCart = () => {
   /* TOTAL */
   const totalAmount = items.reduce(
     (sum, item) =>
-      sum +
-      Number(item.product?.price || 0) *
-        Number(item.quantity || 0),
-    0
+      sum + Number(item.product?.price || 0) * Number(item.quantity || 0),
+    0,
   );
 
   return (
@@ -47,9 +45,7 @@ const BuyerCart = () => {
 
       {isLoading && <p>Loading cart...</p>}
 
-      {!isLoading && items.length === 0 && (
-        <p>Cart is empty</p>
-      )}
+      {!isLoading && items.length === 0 && <p>Cart is empty</p>}
 
       {items.map((item) => (
         <div
@@ -57,7 +53,6 @@ const BuyerCart = () => {
           className="card mb-3 shadow-sm border-0 rounded-4 overflow-hidden"
         >
           <div className="row g-0 align-items-center">
-
             {/* ⭐ LEFT SIDE IMAGE */}
             <div className="col-md-2">
               <img
@@ -77,9 +72,7 @@ const BuyerCart = () => {
 
             {/* PRODUCT INFO */}
             <div className="col-md-4 p-3">
-              <h6 className="fw-bold mb-1">
-                {item.product?.name}
-              </h6>
+              <h6 className="fw-bold mb-1">{item.product?.name}</h6>
               <p className="mb-0 text-success fw-semibold">
                 ₹{item.product?.price}
               </p>
@@ -96,16 +89,14 @@ const BuyerCart = () => {
                       productId: item.product._id,
                       quantity: item.quantity - 1,
                       token: user.token,
-                    })
+                    }),
                   )
                 }
               >
                 −
               </button>
 
-              <span className="mx-3 fw-bold">
-                {item.quantity}
-              </span>
+              <span className="mx-3 fw-bold">{item.quantity}</span>
 
               <button
                 className="btn btn-sm btn-outline-secondary"
@@ -115,7 +106,7 @@ const BuyerCart = () => {
                       productId: item.product._id,
                       quantity: item.quantity + 1,
                       token: user.token,
-                    })
+                    }),
                   )
                 }
               >
@@ -132,14 +123,13 @@ const BuyerCart = () => {
                     removeItemFromCart({
                       productId: item.product._id,
                       token: user.token,
-                    })
+                    }),
                   )
                 }
               >
                 Remove
               </button>
             </div>
-
           </div>
         </div>
       ))}
@@ -150,30 +140,21 @@ const BuyerCart = () => {
           <h5>Total Amount: ₹{totalAmount}</h5>
 
           <div className="mt-3 w-50">
-            <label className="form-label">
-              Payment Method
-            </label>
+            <label className="form-label">Payment Method</label>
             <select
               className="form-select"
               value={paymentMethod}
-              onChange={(e) =>
-                setPaymentMethod(e.target.value)
-              }
+              onChange={(e) => setPaymentMethod(e.target.value)}
             >
-              <option value="COD">
-                Cash on Delivery
-              </option>
-              <option value="UPI">
-                UPI (Mock)
-              </option>
+              <option value="COD">Cash on Delivery</option>
+              <option value="UPI">UPI (Mock)</option>
             </select>
           </div>
 
           <button
             className="btn btn-success mt-3"
-            onClick={() =>
-              dispatch(placeOrder(user.token))
-            }
+            disabled={items.length === 0}
+            onClick={() => dispatch(placeOrder(user.token))}
           >
             Place Order
           </button>

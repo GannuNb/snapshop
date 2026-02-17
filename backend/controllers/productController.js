@@ -168,7 +168,6 @@ export const getProducts = async (req, res) => {
   try {
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 8;
-
     const skip = (page - 1) * limit;
 
     const totalProducts = await Product.countDocuments({
@@ -176,10 +175,12 @@ export const getProducts = async (req, res) => {
     });
 
     const products = await Product.find({ isActive: true })
+      .select("name price category createdAt") // ⭐ only needed fields
       .populate("category", "name")
       .skip(skip)
       .limit(limit)
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean(); // ⭐ HUGE SPEED BOOST
 
     res.json({
       products,
