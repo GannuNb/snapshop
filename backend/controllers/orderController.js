@@ -142,9 +142,8 @@ export const verifyPaymentAndCreateOrder = async (req, res) => {
       razorpay_signature,
     } = req.body;
 
-    // 1️⃣ VERIFY SIGNATURE (SECURITY)
+    // 1️⃣ VERIFY SIGNATURE
     const body = razorpay_order_id + "|" + razorpay_payment_id;
-
     const expectedSignature = crypto
       .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
       .update(body.toString())
@@ -156,9 +155,7 @@ export const verifyPaymentAndCreateOrder = async (req, res) => {
 
     // 2️⃣ PRODUCT CHECK
     const product = await Product.findById(productId);
-    if (!product) {
-      return res.status(404).json({ message: "Product not found" });
-    }
+    if (!product) return res.status(404).json({ message: "Product not found" });
 
     const qty = quantity || 1;
 
@@ -166,33 +163,30 @@ export const verifyPaymentAndCreateOrder = async (req, res) => {
     const order = await Order.create({
       user: req.user._id,
       shippingAddress,
-      items: [
-        {
-          product: product._id,
-          quantity: qty,
-          price: product.price,
-          seller: product.seller,
-        },
-      ],
+      items: [{ product: product._id, quantity: qty, price: product.price, seller: product.seller }],
       totalAmount: product.price * qty,
-
       paymentMethod: "ONLINE",
       paymentStatus: "Paid",
-
       paymentInfo: {
         razorpayOrderId: razorpay_order_id,
         razorpayPaymentId: razorpay_payment_id,
         razorpaySignature: razorpay_signature,
         paidAt: new Date(),
       },
-
       status: "Placed",
     });
 
-    // 4️⃣ SEND EMAIL
+    // 4️⃣ RESPOND TO FRONTEND IMMEDIATELY
+    res.status(201).json({
+      success: true,
+      message: "Payment verified & order placed",
+      order,
+    });
+
+    // 5️⃣ SEND EMAIL IN BACKGROUND
     const user = await User.findById(req.user._id);
 
-    await sendEmail({
+    sendEmail({
       to: user.email,
       subject: "Order Confirmed 🎉",
       html: `
@@ -202,13 +196,8 @@ export const verifyPaymentAndCreateOrder = async (req, res) => {
         <p><strong>Total:</strong> ₹${order.totalAmount}</p>
         <p>Status: ${order.status}</p>
       `,
-    });
+    }).catch(err => console.error("Email sending failed:", err));
 
-    res.status(201).json({
-      success: true,
-      message: "Payment verified & order placed",
-      order,
-    });
   } catch (error) {
     console.error("Verify Payment Error:", error);
     res.status(500).json({ message: error.message });
@@ -217,44 +206,35 @@ export const verifyPaymentAndCreateOrder = async (req, res) => {
 
 
 
+
 /* COD ORDER */
 export const createCODOrder = async (req, res) => {
   try {
     const { productId, quantity, shippingAddress } = req.body;
-
     const product = await Product.findById(productId);
-
-    if (!product) {
-      return res.status(404).json({ message: "Product not found" });
-    }
+    if (!product) return res.status(404).json({ message: "Product not found" });
 
     const qty = quantity || 1;
 
-    // 1️⃣ CREATE ORDER
     const order = await Order.create({
       user: req.user._id,
       shippingAddress,
-      items: [
-        {
-          product: product._id,
-          quantity: qty,
-          price: product.price,
-          seller: product.seller,
-        },
-      ],
-
+      items: [{ product: product._id, quantity: qty, price: product.price, seller: product.seller }],
       totalAmount: product.price * qty,
-
       paymentMethod: "COD",
       paymentStatus: "Pending",
-
       status: "Placed",
     });
 
-    // 2️⃣ SEND EMAIL
+    res.status(201).json({
+      success: true,
+      message: "COD Order placed successfully",
+      order,
+    });
+
     const user = await User.findById(req.user._id);
 
-    await sendEmail({
+    sendEmail({
       to: user.email,
       subject: "COD Order Confirmed 🧾",
       html: `
@@ -263,18 +243,14 @@ export const createCODOrder = async (req, res) => {
         <p><strong>Total:</strong> ₹${order.totalAmount}</p>
         <p>You will pay on delivery.</p>
       `,
-    });
+    }).catch(err => console.error("Email sending failed:", err));
 
-    res.status(201).json({
-      success: true,
-      message: "COD Order placed successfully",
-      order,
-    });
   } catch (error) {
     console.error("COD Order Error:", error);
     res.status(500).json({ message: error.message });
   }
 };
+
 
 
 export const getMyOrders = async (req, res) => {
