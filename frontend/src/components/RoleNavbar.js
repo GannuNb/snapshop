@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Collapse } from "bootstrap";
@@ -19,23 +19,17 @@ const RoleNavbar = () => {
     navigate("/login");
   };
 
-  // Redirect if no user
-  useEffect(() => {
-    if (!user) {
-      navigate("/login");
-    }
-  }, [user, navigate]);
-
-  // Close navbar collapse manually
   const closeNavbar = () => {
     if (collapseRef.current) {
-      const bsCollapse = Collapse.getInstance(collapseRef.current)
-        || new Collapse(collapseRef.current, { toggle: false });
+      const bsCollapse =
+        Collapse.getInstance(collapseRef.current) ||
+        new Collapse(collapseRef.current, { toggle: false });
       bsCollapse.hide();
     }
     setShowDropdown(false);
   };
 
+  // 🔥 If no user → don't show navbar (BUT DO NOT REDIRECT)
   if (!user) return null;
 
   const roleLinks = {
@@ -65,30 +59,23 @@ const RoleNavbar = () => {
     <nav className="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm px-lg-5 px-3">
       <div className="container-fluid">
 
-        {/* LOGO */}
         <Link
           to={user.role === "buyer" ? "/" : `/${user.role}`}
           className="navbar-brand fw-bold text-white"
-          style={{ fontSize: "24px", letterSpacing: "1px" }}
           onClick={closeNavbar}
         >
           Snap<span style={{ color: "#ffd700" }}>Shop</span>
         </Link>
 
-        {/* TOGGLER */}
         <button
           className="navbar-toggler"
           type="button"
           data-bs-toggle="collapse"
           data-bs-target="#navbarContent"
-          aria-controls="navbarContent"
-          aria-expanded="false"
-          aria-label="Toggle navigation"
         >
           <span className="navbar-toggler-icon"></span>
         </button>
 
-        {/* COLLAPSIBLE CONTENT */}
         <div
           className="collapse navbar-collapse"
           id="navbarContent"
@@ -96,7 +83,6 @@ const RoleNavbar = () => {
         >
           <ul className="navbar-nav ms-auto align-items-lg-center gap-lg-4 mt-3 mt-lg-0">
 
-            {/* NAV LINKS */}
             {links.map((link, i) => (
               <li className="nav-item" key={i}>
                 <Link
@@ -113,7 +99,6 @@ const RoleNavbar = () => {
               </li>
             ))}
 
-            {/* USER DROPDOWN */}
             <li className="nav-item dropdown position-relative">
               <button
                 className="btn btn-light fw-semibold px-3 mt-2 mt-lg-0"
