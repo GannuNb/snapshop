@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import axios from "axios";
+import { useCallback } from "react";
 
 const API_URL = `${process.env.REACT_APP_API_URL}/products`;
 
@@ -51,11 +52,11 @@ const ProductDetails = () => {
   }, [id]);
 
   /* ================= LOAD ADDRESSES ================= */
-  const loadAddresses = async () => {
+  const loadAddresses = useCallback(async () => {
     try {
       const res = await axios.get(
         `${process.env.REACT_APP_API_URL}/auth/addresses`,
-        { headers: { Authorization: `Bearer ${user.token}` } }
+        { headers: { Authorization: `Bearer ${user.token}` } },
       );
 
       setSavedAddresses(res.data);
@@ -70,11 +71,13 @@ const ProductDetails = () => {
     } catch {
       console.log("Address load failed");
     }
-  };
+  }, [user]);
 
   useEffect(() => {
-    if (user) loadAddresses();
-  }, [user]);
+    if (user) {
+      loadAddresses();
+    }
+  }, [user, loadAddresses]);
 
   /* ================= ADDRESS HANDLERS ================= */
   const handleAddressChange = (e) => {
@@ -99,13 +102,13 @@ const ProductDetails = () => {
         await axios.put(
           `${process.env.REACT_APP_API_URL}/auth/addresses/${editingId}`,
           address,
-          { headers: { Authorization: `Bearer ${user.token}` } }
+          { headers: { Authorization: `Bearer ${user.token}` } },
         );
       } else {
         await axios.post(
           `${process.env.REACT_APP_API_URL}/auth/addresses`,
           address,
-          { headers: { Authorization: `Bearer ${user.token}` } }
+          { headers: { Authorization: `Bearer ${user.token}` } },
         );
       }
 
@@ -121,7 +124,7 @@ const ProductDetails = () => {
     try {
       await axios.delete(
         `${process.env.REACT_APP_API_URL}/auth/addresses/${id}`,
-        { headers: { Authorization: `Bearer ${user.token}` } }
+        { headers: { Authorization: `Bearer ${user.token}` } },
       );
       loadAddresses();
     } catch (err) {
@@ -134,7 +137,7 @@ const ProductDetails = () => {
       await axios.put(
         `${process.env.REACT_APP_API_URL}/auth/addresses/default/${addr._id}`,
         {},
-        { headers: { Authorization: `Bearer ${user.token}` } }
+        { headers: { Authorization: `Bearer ${user.token}` } },
       );
 
       setSelectedAddressIndex(index);
@@ -157,7 +160,7 @@ const ProductDetails = () => {
             quantity: qty,
             shippingAddress: address,
           },
-          { headers: { Authorization: `Bearer ${user.token}` } }
+          { headers: { Authorization: `Bearer ${user.token}` } },
         );
 
         alert("COD order placed successfully!");
@@ -173,7 +176,7 @@ const ProductDetails = () => {
           productId: product._id,
           quantity: qty,
         },
-        { headers: { Authorization: `Bearer ${user.token}` } }
+        { headers: { Authorization: `Bearer ${user.token}` } },
       );
 
       const options = {
@@ -196,7 +199,7 @@ const ProductDetails = () => {
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_signature: response.razorpay_signature,
               },
-              { headers: { Authorization: `Bearer ${user.token}` } }
+              { headers: { Authorization: `Bearer ${user.token}` } },
             );
 
             alert("Payment successful! Order placed.");
@@ -220,7 +223,6 @@ const ProductDetails = () => {
 
       const rzp = new window.Razorpay(options);
       rzp.open();
-
     } catch (error) {
       console.error(error);
       alert("Buy Now failed");
@@ -230,7 +232,6 @@ const ProductDetails = () => {
   /* ================= UI ================= */
   if (loading) return <p className="text-center mt-4">Loading...</p>;
   if (error) return <p className="text-center mt-4">{error}</p>;
-
 
   return (
     <div className="container mt-4">
