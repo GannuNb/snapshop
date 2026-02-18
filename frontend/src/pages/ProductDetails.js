@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import axios from "axios";
 
-const API_URL = "http://localhost:5000/api/products";
+const API_URL = `${process.env.REACT_APP_API_URL}/products`;
 
 const emptyAddress = {
   fullName: "",
@@ -21,7 +21,7 @@ const ProductDetails = () => {
   const { user } = useSelector((state) => state.auth);
 
   const [product, setProduct] = useState(null);
-  const [qty, setQty] = useState(1); // ⭐ QTY RESTORED
+  const [qty, setQty] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -34,7 +34,7 @@ const ProductDetails = () => {
 
   const [paymentMethod, setPaymentMethod] = useState("ONLINE");
 
-  /* FETCH PRODUCT */
+  /* ================= FETCH PRODUCT ================= */
   useEffect(() => {
     const fetchProduct = async () => {
       try {
@@ -50,12 +50,13 @@ const ProductDetails = () => {
     fetchProduct();
   }, [id]);
 
-  /* LOAD ADDRESSES */
+  /* ================= LOAD ADDRESSES ================= */
   const loadAddresses = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/auth/addresses", {
-        headers: { Authorization: `Bearer ${user.token}` },
-      });
+      const res = await axios.get(
+        `${process.env.REACT_APP_API_URL}/auth/addresses`,
+        { headers: { Authorization: `Bearer ${user.token}` } }
+      );
 
       setSavedAddresses(res.data);
 
@@ -75,38 +76,37 @@ const ProductDetails = () => {
     if (user) loadAddresses();
   }, [user]);
 
-  /* INPUT CHANGE */
+  /* ================= ADDRESS HANDLERS ================= */
   const handleAddressChange = (e) => {
     setAddress({ ...address, [e.target.name]: e.target.value });
   };
 
-  /* ADD NEW ADDRESS */
   const addNewAddressHandler = () => {
     setAddress(emptyAddress);
     setEditingId(null);
     setShowForm(true);
   };
 
-  /* EDIT ADDRESS */
   const editAddressHandler = (addr) => {
     setAddress(addr);
     setEditingId(addr._id);
     setShowForm(true);
   };
 
-  /* SAVE ADDRESS */
   const saveAddressHandler = async () => {
     try {
       if (editingId) {
         await axios.put(
-          `http://localhost:5000/api/auth/addresses/${editingId}`,
+          `${process.env.REACT_APP_API_URL}/auth/addresses/${editingId}`,
           address,
-          { headers: { Authorization: `Bearer ${user.token}` } },
+          { headers: { Authorization: `Bearer ${user.token}` } }
         );
       } else {
-        await axios.post("http://localhost:5000/api/auth/addresses", address, {
-          headers: { Authorization: `Bearer ${user.token}` },
-        });
+        await axios.post(
+          `${process.env.REACT_APP_API_URL}/auth/addresses`,
+          address,
+          { headers: { Authorization: `Bearer ${user.token}` } }
+        );
       }
 
       setShowForm(false);
@@ -117,26 +117,24 @@ const ProductDetails = () => {
     }
   };
 
-  /* DELETE ADDRESS */
   const deleteAddressHandler = async (id) => {
     try {
-      await axios.delete(`http://localhost:5000/api/auth/addresses/${id}`, {
-        headers: { Authorization: `Bearer ${user.token}` },
-      });
-
+      await axios.delete(
+        `${process.env.REACT_APP_API_URL}/auth/addresses/${id}`,
+        { headers: { Authorization: `Bearer ${user.token}` } }
+      );
       loadAddresses();
     } catch (err) {
       alert(err.response?.data?.message || "Delete failed");
     }
   };
 
-  /* SELECT DEFAULT ADDRESS */
   const selectAddressHandler = async (addr, index) => {
     try {
       await axios.put(
-        `http://localhost:5000/api/auth/addresses/default/${addr._id}`,
+        `${process.env.REACT_APP_API_URL}/auth/addresses/default/${addr._id}`,
         {},
-        { headers: { Authorization: `Bearer ${user.token}` } },
+        { headers: { Authorization: `Bearer ${user.token}` } }
       );
 
       setSelectedAddressIndex(index);
@@ -147,23 +145,19 @@ const ProductDetails = () => {
     }
   };
 
-  /* BUY NOW */
+  /* ================= BUY NOW ================= */
   const buyNowHandler = async () => {
     try {
-      /* ===============================
-       1️⃣ COD FLOW
-    =============================== */
+      /* ---------- COD FLOW ---------- */
       if (paymentMethod === "COD") {
         await axios.post(
-          "http://localhost:5000/api/orders/cod-order",
+          `${process.env.REACT_APP_API_URL}/orders/cod-order`,
           {
             productId: product._id,
             quantity: qty,
             shippingAddress: address,
           },
-          {
-            headers: { Authorization: `Bearer ${user.token}` },
-          },
+          { headers: { Authorization: `Bearer ${user.token}` } }
         );
 
         alert("COD order placed successfully!");
@@ -171,24 +165,19 @@ const ProductDetails = () => {
         return;
       }
 
-      /* ===============================
-       2️⃣ ONLINE PAYMENT FLOW
-    =============================== */
+      /* ---------- ONLINE PAYMENT FLOW ---------- */
 
-      // Create Razorpay order
       const { data } = await axios.post(
-        "http://localhost:5000/api/orders/create-payment-order",
+        `${process.env.REACT_APP_API_URL}/orders/create-payment-order`,
         {
           productId: product._id,
           quantity: qty,
         },
-        {
-          headers: { Authorization: `Bearer ${user.token}` },
-        },
+        { headers: { Authorization: `Bearer ${user.token}` } }
       );
 
       const options = {
-        key: "rzp_test_dKgP8VQJaHwf20", // only key_id
+        key: process.env.REACT_APP_RAZORPAY_KEY_ID,
         amount: data.order.amount,
         currency: "INR",
         name: "Rubber Scrap Mart",
@@ -197,21 +186,17 @@ const ProductDetails = () => {
 
         handler: async function (response) {
           try {
-            // Verify payment & create order
             await axios.post(
-              "http://localhost:5000/api/orders/verify-payment",
+              `${process.env.REACT_APP_API_URL}/orders/verify-payment`,
               {
                 productId: product._id,
                 quantity: qty,
                 shippingAddress: address,
-
                 razorpay_order_id: response.razorpay_order_id,
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_signature: response.razorpay_signature,
               },
-              {
-                headers: { Authorization: `Bearer ${user.token}` },
-              },
+              { headers: { Authorization: `Bearer ${user.token}` } }
             );
 
             alert("Payment successful! Order placed.");
@@ -235,14 +220,17 @@ const ProductDetails = () => {
 
       const rzp = new window.Razorpay(options);
       rzp.open();
+
     } catch (error) {
       console.error(error);
       alert("Buy Now failed");
     }
   };
 
+  /* ================= UI ================= */
   if (loading) return <p className="text-center mt-4">Loading...</p>;
   if (error) return <p className="text-center mt-4">{error}</p>;
+
 
   return (
     <div className="container mt-4">

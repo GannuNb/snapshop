@@ -8,7 +8,7 @@ const SellerOrders = () => {
 
   const fetchOrders = async () => {
     const res = await axios.get(
-      "http://127.0.0.1:5000/api/orders/seller",
+      `${process.env.REACT_APP_API_URL}/orders/seller`,
       { headers: { Authorization: `Bearer ${user.token}` } }
     );
     setOrders(res.data);
@@ -20,7 +20,7 @@ const SellerOrders = () => {
 
   const updateStatus = async (orderId, status) => {
     await axios.put(
-      `http://127.0.0.1:5000/api/orders/seller/${orderId}`,
+      `${process.env.REACT_APP_API_URL}/orders/seller/${orderId}`,
       { status },
       { headers: { Authorization: `Bearer ${user.token}` } }
     );

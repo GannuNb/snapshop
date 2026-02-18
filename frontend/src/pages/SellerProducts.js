@@ -2,7 +2,9 @@ import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchSellerProducts } from "../redux/slices/productSlice";
 
-const API_URL = "http://127.0.0.1:5000/api/products";
+// const API_URL = "http://127.0.0.1:5000/api/products";
+const API_URL = `${process.env.REACT_APP_API_URL}/products`;
+
 
 const SellerProducts = () => {
   const dispatch = useDispatch();

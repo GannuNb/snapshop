@@ -1,6 +1,8 @@
 import axios from "axios";
 
-const API_URL = "http://127.0.0.1:5000/api/categories";
+// const API_URL = "http://127.0.0.1:5000/api/categories";
+const API_URL = `${process.env.REACT_APP_API_URL}/categories`;
+
 
 const createCategory = async (data, token) => {
   const res = await axios.post(API_URL, data, {
