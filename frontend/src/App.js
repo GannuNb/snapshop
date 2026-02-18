@@ -33,7 +33,6 @@ import AdminPendingProducts from "./pages/AdminPendingProducts";
 //components
 import RoleNavbar from "./components/RoleNavbar.js";
 import Footer from "./components/Footer";
-import Navbar from "./components/Navbar";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 

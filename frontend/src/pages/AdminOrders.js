@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState,useCallback } from "react";
 import { useSelector } from "react-redux";
 import axios from "axios";
 
@@ -6,17 +6,22 @@ const AdminOrders = () => {
   const { user } = useSelector((state) => state.auth);
   const [orders, setOrders] = useState([]);
 
-  const fetchOrders = async () => {
-    const res = await axios.get(
-      `${process.env.REACT_APP_API_URL}/orders`,
-      { headers: { Authorization: `Bearer ${user.token}` } }
-    );
-    setOrders(res.data);
-  };
+const fetchOrders = useCallback(async () => {
+    if (!user?.token) return;
+    try {
+      const res = await axios.get(
+        `${process.env.REACT_APP_API_URL}/orders`,
+        { headers: { Authorization: `Bearer ${user.token}` } }
+      );
+      setOrders(res.data);
+    } catch (err) {
+      console.error("Failed to fetch orders:", err);
+    }
+  }, [user?.token]);
 
   useEffect(() => {
     fetchOrders();
-  }, [user.token]);
+  }, [fetchOrders]);
 
   const updateStatus = async (orderId, status) => {
     await axios.put(

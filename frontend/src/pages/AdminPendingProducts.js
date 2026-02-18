@@ -7,7 +7,7 @@ import {
 } from "../redux/slices/adminProductSlice";
 
 
-const API_URL = `${process.env.REACT_APP_API_URL}/products`;
+// const API_URL = `${process.env.REACT_APP_API_URL}/products`;
 
 
 const AdminPendingProducts = () => {
