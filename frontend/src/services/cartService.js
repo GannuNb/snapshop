@@ -36,9 +36,11 @@ const updateQuantity = async (productId, quantity, token) => {
   return res.data;
 };
 
-export default {
+const cartService = {
   getCart,
   addToCart,
   removeFromCart,
   updateQuantity,
 };
+
+export default cartService;

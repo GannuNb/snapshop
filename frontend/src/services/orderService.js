@@ -26,7 +26,9 @@ const getMyOrders = async (token) => {
   return res.data;
 };
 
-export default {
+const orderService = {
   placeOrder,
   getMyOrders,
 };
+
+export default orderService;

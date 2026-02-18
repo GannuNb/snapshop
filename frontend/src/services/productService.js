@@ -39,8 +39,11 @@ const getSellerProducts = async (token) => {
 };
 
 
-export default {
+const productService = {
   getProducts,
   createProduct,
   getSellerProducts,
 };
+
+export default productService;
+

@@ -19,7 +19,10 @@ const getCategories = async () => {
   return res.data;
 };
 
-export default {
+const categoryService = {
   createCategory,
   getCategories,
 };
+
+export default categoryService;
+

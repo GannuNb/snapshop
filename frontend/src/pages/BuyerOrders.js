@@ -5,10 +5,6 @@ import { addItemToCart } from "../redux/slices/cartSlice";
 import { useNavigate } from "react-router-dom";
 
 import {
-  FaBox,
-  FaBoxOpen,
-  FaShippingFast,
-  FaCheckCircle,
   FaShoppingBag,
   FaChevronDown,
   FaChevronUp,

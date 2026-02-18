@@ -29,8 +29,10 @@ const rejectProduct = async (id, token) => {
   return res.data;
 };
 
-export default {
+const adminProductService = {
   getPendingProducts,
   approveProduct,
   rejectProduct,
 };
+
+export default adminProductService;
