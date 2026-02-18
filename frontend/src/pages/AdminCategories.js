@@ -46,7 +46,7 @@ const AdminCategories = () => {
           <h5 className="fw-semibold mb-3">All Categories</h5>
 
           {categories.length === 0 ? (
-            <p className="text-muted mb-0">No categories yet.</p>
+            <p className="text-muted mb-0">No Categories yet.</p>
           ) : (
             <ul className="list-group list-group-flush">
               {categories.map((cat) => (
