@@ -32,6 +32,8 @@ const ProductDetails = () => {
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
 
+  const [paymentMethod, setPaymentMethod] = useState("ONLINE");
+
   /* FETCH PRODUCT */
   useEffect(() => {
     const fetchProduct = async () => {
@@ -99,14 +101,12 @@ const ProductDetails = () => {
         await axios.put(
           `http://localhost:5000/api/auth/addresses/${editingId}`,
           address,
-          { headers: { Authorization: `Bearer ${user.token}` } }
+          { headers: { Authorization: `Bearer ${user.token}` } },
         );
       } else {
-        await axios.post(
-          "http://localhost:5000/api/auth/addresses",
-          address,
-          { headers: { Authorization: `Bearer ${user.token}` } }
-        );
+        await axios.post("http://localhost:5000/api/auth/addresses", address, {
+          headers: { Authorization: `Bearer ${user.token}` },
+        });
       }
 
       setShowForm(false);
@@ -120,12 +120,9 @@ const ProductDetails = () => {
   /* DELETE ADDRESS */
   const deleteAddressHandler = async (id) => {
     try {
-      await axios.delete(
-        `http://localhost:5000/api/auth/addresses/${id}`,
-        {
-          headers: { Authorization: `Bearer ${user.token}` },
-        }
-      );
+      await axios.delete(`http://localhost:5000/api/auth/addresses/${id}`, {
+        headers: { Authorization: `Bearer ${user.token}` },
+      });
 
       loadAddresses();
     } catch (err) {
@@ -139,7 +136,7 @@ const ProductDetails = () => {
       await axios.put(
         `http://localhost:5000/api/auth/addresses/default/${addr._id}`,
         {},
-        { headers: { Authorization: `Bearer ${user.token}` } }
+        { headers: { Authorization: `Bearer ${user.token}` } },
       );
 
       setSelectedAddressIndex(index);
@@ -153,20 +150,93 @@ const ProductDetails = () => {
   /* BUY NOW */
   const buyNowHandler = async () => {
     try {
-      await axios.post(
-        "http://localhost:5000/api/orders/buy-now",
+      /* ===============================
+       1️⃣ COD FLOW
+    =============================== */
+      if (paymentMethod === "COD") {
+        await axios.post(
+          "http://localhost:5000/api/orders/cod-order",
+          {
+            productId: product._id,
+            quantity: qty,
+            shippingAddress: address,
+          },
+          {
+            headers: { Authorization: `Bearer ${user.token}` },
+          },
+        );
+
+        alert("COD order placed successfully!");
+        navigate("/buyer/orders");
+        return;
+      }
+
+      /* ===============================
+       2️⃣ ONLINE PAYMENT FLOW
+    =============================== */
+
+      // Create Razorpay order
+      const { data } = await axios.post(
+        "http://localhost:5000/api/orders/create-payment-order",
         {
           productId: product._id,
-          quantity: qty, // ⭐ QTY INCLUDED
-          shippingAddress: address,
+          quantity: qty,
         },
         {
           headers: { Authorization: `Bearer ${user.token}` },
-        }
+        },
       );
 
-      navigate("/buyer/orders");
-    } catch {
+      const options = {
+        key: "rzp_test_dKgP8VQJaHwf20", // only key_id
+        amount: data.order.amount,
+        currency: "INR",
+        name: "Rubber Scrap Mart",
+        description: product.name,
+        order_id: data.order.id,
+
+        handler: async function (response) {
+          try {
+            // Verify payment & create order
+            await axios.post(
+              "http://localhost:5000/api/orders/verify-payment",
+              {
+                productId: product._id,
+                quantity: qty,
+                shippingAddress: address,
+
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+              },
+              {
+                headers: { Authorization: `Bearer ${user.token}` },
+              },
+            );
+
+            alert("Payment successful! Order placed.");
+            navigate("/buyer/orders");
+          } catch (err) {
+            alert("Payment verification failed");
+            console.error(err);
+          }
+        },
+
+        prefill: {
+          name: user?.name,
+          email: user?.email,
+          contact: address?.phone,
+        },
+
+        theme: {
+          color: "#3399cc",
+        },
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.open();
+    } catch (error) {
+      console.error(error);
       alert("Buy Now failed");
     }
   };
@@ -178,7 +248,6 @@ const ProductDetails = () => {
     <div className="container mt-4">
       <div className="card shadow-sm rounded-4 overflow-hidden">
         <div className="row g-0">
-
           {/* PRODUCT IMAGE */}
           <div className="col-md-5">
             <img
@@ -254,6 +323,28 @@ const ProductDetails = () => {
               </div>
             ))}
 
+            <div className="my-3">
+              <h6>Payment Method</h6>
+
+              <div>
+                <input
+                  type="radio"
+                  checked={paymentMethod === "ONLINE"}
+                  onChange={() => setPaymentMethod("ONLINE")}
+                />
+                <span className="ms-2">Online Payment</span>
+              </div>
+
+              <div>
+                <input
+                  type="radio"
+                  checked={paymentMethod === "COD"}
+                  onChange={() => setPaymentMethod("COD")}
+                />
+                <span className="ms-2">Cash on Delivery</span>
+              </div>
+            </div>
+
             <button
               className="btn btn-success mt-3"
               onClick={buyNowHandler}
@@ -271,21 +362,29 @@ const ProductDetails = () => {
           className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
           style={{ background: "rgba(0,0,0,0.5)", zIndex: 999 }}
         >
-          <div className="bg-white p-4 rounded shadow" style={{ width: "400px" }}>
+          <div
+            className="bg-white p-4 rounded shadow"
+            style={{ width: "400px" }}
+          >
             <h5>{editingId ? "Edit Address" : "Add Address"}</h5>
 
-            {["fullName","phone","addressLine","city","state","pincode"].map(
-              (field) => (
-                <input
-                  key={field}
-                  className="form-control mb-2"
-                  name={field}
-                  placeholder={field}
-                  value={address[field]}
-                  onChange={handleAddressChange}
-                />
-              )
-            )}
+            {[
+              "fullName",
+              "phone",
+              "addressLine",
+              "city",
+              "state",
+              "pincode",
+            ].map((field) => (
+              <input
+                key={field}
+                className="form-control mb-2"
+                name={field}
+                placeholder={field}
+                value={address[field]}
+                onChange={handleAddressChange}
+              />
+            ))}
 
             <div className="d-flex justify-content-end gap-2">
               <button

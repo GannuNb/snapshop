@@ -10,6 +10,9 @@ import authorizeRoles from "../middlewares/roleMiddleware.js";
 import { getAllOrders } from "../controllers/orderController.js";
 import { getSellerOrders } from "../controllers/orderController.js";
 import { buyNowOrder } from "../controllers/orderController.js";
+import { createPaymentOrder } from "../controllers/orderController.js";
+import { verifyPaymentAndCreateOrder } from "../controllers/orderController.js";
+import { createCODOrder } from "../controllers/orderController.js";
 
 
 const router = express.Router();
@@ -25,6 +28,25 @@ router.put("/seller/:orderId", protect, authorizeRoles("seller"), sellerUpdateOr
 /* ADMIN */
 router.get("/", protect, authorizeRoles("admin"), getAllOrders);
 router.put("/admin/:orderId", protect, authorizeRoles("admin"), adminUpdateOrderStatus);
+router.post(
+  "/create-payment-order",
+  protect,
+  authorizeRoles("buyer"),
+  createPaymentOrder
+);
+router.post(
+  "/verify-payment",
+  protect,
+  authorizeRoles("buyer"),
+  verifyPaymentAndCreateOrder
+);
+router.post(
+  "/cod-order",
+  protect,
+  authorizeRoles("buyer"),
+  createCODOrder
+);
+
 router.post(
   "/buy-now",
   protect,
