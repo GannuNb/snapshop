@@ -8,11 +8,10 @@ const RoleNavbar = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();
+  const collapseRef = useRef(null);
 
   const { user } = useSelector((state) => state.auth);
-
   const [showDropdown, setShowDropdown] = useState(false);
-  const collapseRef = useRef(null);
 
   const handleLogout = () => {
     dispatch(logout());
@@ -29,9 +28,40 @@ const RoleNavbar = () => {
     setShowDropdown(false);
   };
 
-  // 🔥 If no user → don't show navbar (BUT DO NOT REDIRECT)
-  if (!user) return null;
+  // 🔓 If NOT Logged In → Simple Navbar
+  if (!user) {
+    return (
+      <nav className="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm px-lg-5 px-3">
+        <div className="container-fluid">
+          <Link to="/" className="navbar-brand fw-bold text-white">
+            Snap<span style={{ color: "#ffd700" }}>Shop</span>
+          </Link>
 
+          <div className="ms-auto">
+            <Link
+              to="/login"
+              className={`btn btn-light me-2 ${
+                location.pathname === "/login" ? "fw-bold" : ""
+              }`}
+            >
+              Login
+            </Link>
+
+            <Link
+              to="/register"
+              className={`btn btn-warning ${
+                location.pathname === "/register" ? "fw-bold" : ""
+              }`}
+            >
+              Register
+            </Link>
+          </div>
+        </div>
+      </nav>
+    );
+  }
+
+  // 🔐 If Logged In → Role-Based Links
   const roleLinks = {
     buyer: [
       { name: "Home", path: "/" },
