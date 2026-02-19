@@ -205,8 +205,6 @@ export const verifyPaymentAndCreateOrder = async (req, res) => {
 };
 
 
-
-
 /* COD ORDER */
 export const createCODOrder = async (req, res) => {
   try {
@@ -247,6 +245,131 @@ export const createCODOrder = async (req, res) => {
 
   } catch (error) {
     console.error("COD Order Error:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+
+/* CREATE RAZORPAY ORDER FOR CART */
+export const createCartPaymentOrder = async (req, res) => {
+  try {
+    const cart = await Cart.findOne({ user: req.user._id })
+      .populate("items.product", "price seller");
+
+    if (!cart || cart.items.length === 0) {
+      return res.status(400).json({ message: "Cart is empty" });
+    }
+
+    const totalAmount = cart.items.reduce(
+      (sum, item) => sum + item.product.price * item.quantity,
+      0
+    );
+
+    const options = {
+      amount: totalAmount * 100, // paise
+      currency: "INR",
+      receipt: `cart_receipt_${Date.now()}`,
+    };
+
+    const razorpayOrder = await razorpay.orders.create(options);
+
+    res.status(200).json({
+      success: true,
+      order: razorpayOrder,
+      totalAmount,
+    });
+
+  } catch (error) {
+    console.error("Create Cart Payment Order Error:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+
+/* VERIFY CART PAYMENT & CREATE ORDER */
+export const verifyCartPaymentAndCreateOrder = async (req, res) => {
+  try {
+    const {
+      razorpay_order_id,
+      razorpay_payment_id,
+      razorpay_signature,
+    } = req.body;
+
+    /* 1️⃣ VERIFY SIGNATURE */
+    const body = razorpay_order_id + "|" + razorpay_payment_id;
+
+    const expectedSignature = crypto
+      .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+      .update(body.toString())
+      .digest("hex");
+
+    if (expectedSignature !== razorpay_signature) {
+      return res.status(400).json({ message: "Payment verification failed" });
+    }
+
+    /* 2️⃣ GET CART */
+    const cart = await Cart.findOne({ user: req.user._id })
+      .populate("items.product", "price seller");
+
+    if (!cart || cart.items.length === 0) {
+      return res.status(400).json({ message: "Cart is empty" });
+    }
+
+    /* 3️⃣ GET DEFAULT ADDRESS */
+    const user = await User.findById(req.user._id);
+
+    const shippingAddress =
+      user.savedAddresses.find((a) => a.isDefault) ||
+      user.savedAddresses[0];
+
+    if (!shippingAddress) {
+      return res.status(400).json({
+        message: "Please add shipping address first",
+      });
+    }
+
+    /* 4️⃣ PREPARE ITEMS */
+    const items = cart.items.map((item) => ({
+      product: item.product._id,
+      quantity: item.quantity,
+      price: item.product.price,
+      seller: item.product.seller,
+    }));
+
+    const totalAmount = items.reduce(
+      (sum, item) => sum + item.price * item.quantity,
+      0
+    );
+
+    /* 5️⃣ CREATE ORDER */
+    const order = await Order.create({
+      user: req.user._id,
+      shippingAddress,
+      items,
+      totalAmount,
+      paymentMethod: "ONLINE",
+      paymentStatus: "Paid",
+      paymentInfo: {
+        razorpayOrderId: razorpay_order_id,
+        razorpayPaymentId: razorpay_payment_id,
+        razorpaySignature: razorpay_signature,
+        paidAt: new Date(),
+      },
+      status: "Placed",
+    });
+
+    /* 6️⃣ CLEAR CART */
+    cart.items = [];
+    await cart.save();
+
+    res.status(201).json({
+      success: true,
+      message: "Payment verified & cart order placed",
+      order,
+    });
+
+  } catch (error) {
+    console.error("Verify Cart Payment Error:", error);
     res.status(500).json({ message: error.message });
   }
 };

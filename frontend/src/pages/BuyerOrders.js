@@ -4,15 +4,10 @@ import { fetchMyOrders } from "../redux/slices/orderSlice";
 import { addItemToCart } from "../redux/slices/cartSlice";
 import { useNavigate } from "react-router-dom";
 
-import {
-  FaShoppingBag,
-  FaChevronDown,
-  FaChevronUp,
-} from "react-icons/fa";
+import { FaShoppingBag, FaChevronDown, FaChevronUp } from "react-icons/fa";
 
 // const API_URL = "http://127.0.0.1:5000/api/products";
 const API_URL = `${process.env.REACT_APP_API_URL}/products`;
-
 
 const BuyerOrders = () => {
   const dispatch = useDispatch();
@@ -56,14 +51,13 @@ const BuyerOrders = () => {
       addItemToCart({
         productId,
         token: user.token,
-      })
+      }),
     );
     alert("Added to cart ✅");
   };
 
   return (
     <div className="container py-4">
-
       {/* HEADER */}
       <div className="d-flex align-items-center mb-4">
         <FaShoppingBag className="me-2 text-primary" />
@@ -92,15 +86,15 @@ const BuyerOrders = () => {
         const isOpen = openOrder === order._id;
 
         return (
-          <div key={order._id} className="card shadow-sm border-0 rounded-4 mb-3">
-
+          <div
+            key={order._id}
+            className="card shadow-sm border-0 rounded-4 mb-3"
+          >
             {/* HEADER (COLLAPSIBLE) */}
             <div
               className="card-body d-flex justify-content-between align-items-center"
               style={{ cursor: "pointer" }}
-              onClick={() =>
-                setOpenOrder(isOpen ? null : order._id)
-              }
+              onClick={() => setOpenOrder(isOpen ? null : order._id)}
             >
               <div>
                 <h6 className="fw-bold mb-1">
@@ -122,7 +116,6 @@ const BuyerOrders = () => {
             {/* COLLAPSIBLE CONTENT */}
             {isOpen && (
               <div className="px-4 pb-4">
-
                 <hr />
 
                 {/* PRODUCTS */}
@@ -132,7 +125,6 @@ const BuyerOrders = () => {
                     className="d-flex justify-content-between align-items-center border-bottom py-3"
                   >
                     <div className="d-flex">
-
                       <img
                         src={`${API_URL}/image/${item.product?._id}`}
                         alt={item.product?.name}
@@ -177,9 +169,7 @@ const BuyerOrders = () => {
 
                       <button
                         className="btn btn-sm btn-outline-warning"
-                        onClick={() =>
-                          buyAgainHandler(item.product?._id)
-                        }
+                        onClick={() => buyAgainHandler(item.product?._id)}
                       >
                         Buy Again
                       </button>
@@ -190,9 +180,7 @@ const BuyerOrders = () => {
                 {/* TOTAL */}
                 <div className="d-flex justify-content-between mt-3">
                   <span>Total</span>
-                  <h5 className="text-success fw-bold">
-                    ₹{order.totalAmount}
-                  </h5>
+                  <h5 className="text-success fw-bold">₹{order.totalAmount}</h5>
                 </div>
 
                 {/* PROGRESS BAR (ANIMATED STYLE) */}
@@ -239,25 +227,97 @@ const BuyerOrders = () => {
       })}
 
       {/* ORDER MODAL */}
+      {/* ORDER MODAL */}
       {modalOrder && (
         <div
           className="position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center"
           style={{ background: "rgba(0,0,0,0.5)", zIndex: 999 }}
         >
-          <div className="bg-white p-4 rounded shadow" style={{ width: 420 }}>
+          <div
+            className="bg-white p-4 rounded shadow"
+            style={{ width: 500, maxHeight: "85vh", overflowY: "auto" }}
+          >
             <h5 className="fw-bold mb-3">
-              Order #{modalOrder._id.slice(-6)}
+              Order #{modalOrder._id.slice(-6).toUpperCase()}
             </h5>
 
+            {/* STATUS */}
             <p className="mb-1">
               <strong>Status:</strong> {modalOrder.status}
             </p>
+
             <p className="mb-1">
               <strong>Total:</strong> ₹{modalOrder.totalAmount}
             </p>
 
+            <hr />
+
+            {/* SHIPPING DETAILS */}
+            <h6 className="fw-bold mb-2 text-primary">Shipping Details</h6>
+
+            <p className="mb-1">
+              <strong>Name:</strong> {modalOrder.shippingAddress.fullName}
+            </p>
+
+            <p className="mb-1">
+              <strong>Phone:</strong> {modalOrder.shippingAddress.phone}
+            </p>
+
+            <p className="mb-1">
+              <strong>Address:</strong> {modalOrder.shippingAddress.addressLine}
+            </p>
+
+            <p className="mb-1">
+              {modalOrder.shippingAddress.city},{" "}
+              {modalOrder.shippingAddress.state} -{" "}
+              {modalOrder.shippingAddress.pincode}
+            </p>
+
+            <p className="mb-3">{modalOrder.shippingAddress.country}</p>
+
+            <hr />
+
+            {/* PAYMENT DETAILS */}
+            <h6 className="fw-bold mb-2 text-primary">Payment Details</h6>
+
+            <p className="mb-1">
+              <strong>Method:</strong> {modalOrder.paymentMethod}
+            </p>
+
+            <p className="mb-1">
+              <strong>Status:</strong>{" "}
+              <span
+                className={
+                  modalOrder.paymentStatus === "Paid"
+                    ? "text-success fw-bold"
+                    : modalOrder.paymentStatus === "Failed"
+                      ? "text-danger fw-bold"
+                      : "text-warning fw-bold"
+                }
+              >
+                {modalOrder.paymentStatus}
+              </span>
+            </p>
+
+            {/* If ONLINE Payment */}
+            {modalOrder.paymentMethod === "ONLINE" &&
+              modalOrder.paymentInfo?.paidAt && (
+                <p className="mb-1">
+                  <strong>Paid At:</strong>{" "}
+                  {new Date(modalOrder.paymentInfo.paidAt).toLocaleString()}
+                </p>
+              )}
+
+            {modalOrder.paymentMethod === "ONLINE" &&
+              modalOrder.paymentInfo?.razorpayPaymentId && (
+                <p className="mb-3">
+                  <strong>Transaction ID:</strong>{" "}
+                  {modalOrder.paymentInfo.razorpayPaymentId}
+                </p>
+              )}
+
             <button
-              className="btn btn-secondary btn-sm mt-3"
+              className="btn btn-secondary btn-sm"
               onClick={() => setModalOrder(null)}
             >
               Close

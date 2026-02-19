@@ -4,7 +4,6 @@ import protect from "../middlewares/authMiddleware.js";
 import authorizeRoles from "../middlewares/roleMiddleware.js";
 import { updateQuantity } from "../controllers/cartController.js";
 
-import { buyNow } from "../controllers/cartController.js";
 
 const router = express.Router();
 
@@ -14,14 +13,6 @@ router.delete("/:productId", protect, authorizeRoles("buyer"), removeFromCart);
 
 
 router.put("/", protect, authorizeRoles("buyer"), updateQuantity);
-
-
-router.post(
-  "/buynow",
-  protect,
-  authorizeRoles("buyer"),
-  buyNow
-);
 
 
 export default router;
