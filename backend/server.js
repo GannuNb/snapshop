@@ -11,10 +11,6 @@ import cartRoutes from "./routes/cartRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
 
 
-
-
-
-
 connectDB();
 
 const app = express();
