@@ -33,8 +33,13 @@ app.use("/api/orders", orderRoutes);
 
 
 app.get("/", (req, res) => {
-  res.send("Flipkart Clone API Running");
+  res.send("Snapshop's API Running");
 });
+
+app.get("/health", (req, res) => {
+  res.json({ status: "ok", time: new Date() });
+});
+
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () =>
