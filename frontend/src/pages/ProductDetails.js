@@ -234,7 +234,7 @@ const ProductDetails = () => {
   if (error) return <p className="text-center mt-4">{error}</p>;
 
   return (
-    <div className="container mt-4">
+    <div className="container mt-4 mb-4">
       <div className="card shadow-sm rounded-4 overflow-hidden">
         <div className="row g-0">
           {/* PRODUCT IMAGE */}
