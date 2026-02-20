@@ -25,7 +25,7 @@ app.use("/api/cart", cartRoutes);
 app.use("/api/orders", orderRoutes);
 
 app.get("/", (req, res) => {
-  res.send("Flipkart Clone API Running");
+  res.send("Snapshop's API Running");
 });
 
 // ✅ Run only locally
