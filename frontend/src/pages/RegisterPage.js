@@ -21,7 +21,7 @@ const RegisterPage = () => {
 
   useEffect(() => {
     if (isSuccess && user) {
-      if (user.role === "buyer") navigate("/buyer");
+      if (user.role === "buyer") navigate("/");
       else if (user.role === "seller") navigate("/seller");
 
       dispatch(reset());

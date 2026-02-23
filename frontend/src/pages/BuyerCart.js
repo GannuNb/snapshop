@@ -138,7 +138,7 @@ const BuyerCart = () => {
         key: process.env.REACT_APP_RAZORPAY_KEY_ID,
         amount: data.order.amount,
         currency: "INR",
-        name: "Rubber Scrap Mart",
+        name: "Snap Shop",
         description: "Cart Checkout",
         order_id: data.order.id,
         handler: async function (response) {

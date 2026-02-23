@@ -159,7 +159,7 @@ const RoleNavbar = () => {
                   <input
                     type="search"
                     className="form-control rounded-pill px-3"
-                    placeholder="Search products..."
+                    placeholder="Search shoe..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     style={{ minWidth: "250px" }}
@@ -219,6 +219,7 @@ const RoleNavbar = () => {
             ))}
 
             {/* ================= USER DROPDOWN ================= */}
+            {/* ================= USER DROPDOWN ================= */}
             <li className="nav-item dropdown position-relative">
               <button
                 className="btn btn-light fw-semibold px-3"
@@ -232,6 +233,28 @@ const RoleNavbar = () => {
                   className="dropdown-menu show mt-2"
                   style={{ right: 0, left: "auto" }}
                 >
+                  {/* Dashboard Link based on role */}
+                  <button
+                    className="dropdown-item"
+                    onClick={() => {
+                      let dashboardPath = "/"; // default fallback
+                      if (user.role === "buyer") dashboardPath = "/buyer";
+                      else if (user.role === "seller")
+                        dashboardPath = "/seller";
+                      else if (user.role === "admin") dashboardPath = "/admin";
+
+                      navigate(dashboardPath);
+                      closeNavbar();
+                      setShowDropdown(false);
+                    }}
+                  >
+                    Dashboard
+                  </button>
+
+                  {/* Divider */}
+                  <div className="dropdown-divider"></div>
+
+                  {/* Logout */}
                   <button
                     onClick={handleLogout}
                     className="dropdown-item text-danger"
