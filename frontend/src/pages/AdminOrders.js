@@ -10,7 +10,7 @@ const fetchOrders = useCallback(async () => {
     if (!user?.token) return;
     try {
       const res = await axios.get(
-        `${process.env.REACT_APP_API_URL}/orders`,
+        `${process.env.REACT_APP_API_URL}/orders/admin`,
         { headers: { Authorization: `Bearer ${user.token}` } }
       );
       setOrders(res.data);
