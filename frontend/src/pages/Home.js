@@ -39,7 +39,7 @@ const Home = () => {
       img: "https://images.unsplash.com/photo-1523275335684-37898b6baf30",
     },
     {
-      name: "Home & Living",
+      name: "Home and Living",
       img: "https://images.unsplash.com/photo-1493666438817-866a91353ca9",
     },
   ];

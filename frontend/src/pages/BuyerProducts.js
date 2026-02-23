@@ -9,7 +9,7 @@ import ProductCard from "../components/ProductCard";
 const categoriesList = [
   "Electronics",
   "Fashion",
-  "Home & Living",
+  "Home and Living",
   "Accessories",
   "Toys",
   "snacks",
