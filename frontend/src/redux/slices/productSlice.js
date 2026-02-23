@@ -4,9 +4,9 @@ import productService from "../../services/productService";
 /* ================= BUYER FETCH PRODUCTS ================= */
 export const fetchProducts = createAsyncThunk(
   "product/fetch",
-  async ({ page }, thunkAPI) => {
+  async (params, thunkAPI) => {
     try {
-      return await productService.getProducts(page);
+      return await productService.getProducts(params);
     } catch (error) {
       return thunkAPI.rejectWithValue(
         error.response?.data?.message || "Failed to load products"

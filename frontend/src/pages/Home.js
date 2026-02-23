@@ -1,9 +1,11 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import styles from "../styles/Home.module.css";
 
 const Home = () => {
   const { user } = useSelector((state) => state.auth);
+
+  const navigate = useNavigate();
 
   const features = [
     {
@@ -90,7 +92,13 @@ const Home = () => {
 
                   <p className={styles.featureText}>{item.text}</p>
 
-                  <span className={styles.featureTag}>Learn More →</span>
+                  <span
+                    className={styles.featureTag}
+                    style={{ cursor: "pointer" }}
+                    onClick={() => navigate("/about")}
+                  >
+                    Learn More →
+                  </span>
                 </div>
               </div>
             ))}
@@ -137,6 +145,7 @@ const Home = () => {
       </section>
 
       {/* ================= TRENDING CATEGORIES ================= */}
+
       <section className="py-5 bg-white">
         <div className="container text-center">
           <h2 className={styles.sectionHeading}>Trending Categories</h2>
@@ -147,7 +156,15 @@ const Home = () => {
           <div className="row g-4 mt-3">
             {categories.map((cat, index) => (
               <div className="col-6 col-md-3" key={index}>
-                <div className={styles.categoryCard}>
+                <div
+                  className={styles.categoryCard}
+                  style={{ cursor: "pointer" }}
+                  onClick={() =>
+                    navigate("/buyer/products", {
+                      state: { category: cat.name },
+                    })
+                  }
+                >
                   <img src={cat.img} alt={cat.name} />
                   <div className={styles.categoryOverlay}>
                     <h6>{cat.name}</h6>

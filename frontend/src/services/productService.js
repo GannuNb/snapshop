@@ -5,9 +5,15 @@ const API_URL = `${process.env.REACT_APP_API_URL}/products`;
 
 
 /* BUYER — PAGINATED PRODUCTS */
-const getProducts = async (page = 1) => {
+const getProducts = async ({
+  page = 1,
+  search = "",
+  category = "",
+  minPrice = "",
+  maxPrice = "",
+}) => {
   const res = await axios.get(
-    `${API_URL}?page=${page}&limit=8`
+    `${API_URL}?page=${page}&limit=8&search=${search}&category=${category}&minPrice=${minPrice}&maxPrice=${maxPrice}`
   );
   return res.data;
 };

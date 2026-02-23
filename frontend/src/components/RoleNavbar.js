@@ -1,8 +1,11 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Collapse } from "bootstrap";
+import axios from "axios";
 import { logout } from "../redux/slices/authSlice";
+
+const API_URL = `${process.env.REACT_APP_API_URL}/products`;
 
 const RoleNavbar = () => {
   const dispatch = useDispatch();
@@ -11,8 +14,13 @@ const RoleNavbar = () => {
   const collapseRef = useRef(null);
 
   const { user } = useSelector((state) => state.auth);
-  const [showDropdown, setShowDropdown] = useState(false);
 
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [suggestions, setSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
+  /* ================= LOGOUT ================= */
   const handleLogout = () => {
     dispatch(logout());
     navigate("/login");
@@ -28,43 +36,33 @@ const RoleNavbar = () => {
     setShowDropdown(false);
   };
 
-  // 🔓 If NOT Logged In → Simple Navbar
-  if (!user) {
-    return (
-      <nav className="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm px-lg-5 px-3">
-        <div className="container-fluid">
-          <Link to="/" className="navbar-brand fw-bold text-white">
-            Snap<span style={{ color: "#ffd700" }}>Shop</span>
-          </Link>
+  /* ================= LIVE SEARCH (DEBOUNCED) ================= */
+  useEffect(() => {
+    const delayDebounce = setTimeout(async () => {
+      if (searchTerm.trim()) {
+        try {
+          const res = await axios.get(
+            `${API_URL}/search?keyword=${searchTerm}`
+          );
+          setSuggestions(res.data);
+          setShowSuggestions(true);
+        } catch (error) {
+          console.error(error);
+        }
+      } else {
+        setSuggestions([]);
+        setShowSuggestions(false);
+      }
+    }, 400); // 400ms debounce
 
-          <div className="ms-auto">
-            <Link
-              to="/login"
-              className={`btn btn-light me-2 ${
-                location.pathname === "/login" ? "fw-bold" : ""
-              }`}
-            >
-              Login
-            </Link>
+    return () => clearTimeout(delayDebounce);
+  }, [searchTerm]);
 
-            <Link
-              to="/register"
-              className={`btn btn-warning ${
-                location.pathname === "/register" ? "fw-bold" : ""
-              }`}
-            >
-              Register
-            </Link>
-          </div>
-        </div>
-      </nav>
-    );
-  }
-
-  // 🔐 If Logged In → Role-Based Links
+  /* ================= ROLE LINKS ================= */
   const roleLinks = {
     buyer: [
       { name: "Home", path: "/" },
+      { name: "About Us", path: "/about" },
       { name: "Products", path: "/buyer/products" },
       { name: "Orders", path: "/buyer/orders" },
       { name: "Cart", path: "/buyer/cart" },
@@ -83,17 +81,26 @@ const RoleNavbar = () => {
     ],
   };
 
-  const links = roleLinks[user.role] || [];
+  const links = roleLinks[user?.role] || [];
+
+  /* ================= NOT LOGGED IN ================= */
+  if (!user) {
+    return (
+      <nav className="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm px-lg-5 px-3">
+        <div className="container-fluid">
+          <Link to="/" className="navbar-brand fw-bold text-white">
+            Snap<span style={{ color: "#ffd700" }}>Shop</span>
+          </Link>
+        </div>
+      </nav>
+    );
+  }
 
   return (
     <nav className="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm px-lg-5 px-3">
       <div className="container-fluid">
 
-        <Link
-          to={user.role === "buyer" ? "/" : `/${user.role}`}
-          className="navbar-brand fw-bold text-white"
-          onClick={closeNavbar}
-        >
+        <Link to="/" className="navbar-brand fw-bold text-white">
           Snap<span style={{ color: "#ffd700" }}>Shop</span>
         </Link>
 
@@ -113,11 +120,73 @@ const RoleNavbar = () => {
         >
           <ul className="navbar-nav ms-auto align-items-lg-center gap-lg-4 mt-3 mt-lg-0">
 
+            {/* ================= SEARCH FOR BUYER ================= */}
+            {user.role === "buyer" && (
+              <div className="position-relative me-4">
+
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    if (searchTerm.trim()) {
+                      navigate("/buyer/products", {
+                        state: { search: searchTerm },
+                      });
+                      setShowSuggestions(false);
+                      setSearchTerm("");
+                    }
+                  }}
+                >
+                  <input
+                    type="search"
+                    className="form-control rounded-pill px-3"
+                    placeholder="Search products..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    style={{ minWidth: "250px" }}
+                  />
+                </form>
+
+                {/* 🔥 LIVE SUGGESTIONS */}
+                {showSuggestions && searchTerm && (
+                  <div
+                    className="position-absolute bg-white shadow rounded-3 mt-1 w-100"
+                    style={{ zIndex: 999 }}
+                  >
+                    {suggestions.length > 0 ? (
+                      suggestions.map((item) => (
+                        <div
+                          key={item._id}
+                          className="px-3 py-2 border-bottom"
+                          style={{ cursor: "pointer" }}
+                          onClick={() => {
+                            navigate(`/buyer/product/${item._id}`);
+                            setSearchTerm("");
+                            setShowSuggestions(false);
+                          }}
+                        >
+                          <strong>{item.name}</strong>
+                          <br />
+                          <small className="text-muted">
+                            {item.category?.name}
+                          </small>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="px-3 py-2 text-muted">
+                        No products found
+                      </div>
+                    )}
+                  </div>
+                )}
+
+              </div>
+            )}
+
+            {/* ================= NAV LINKS ================= */}
             {links.map((link, i) => (
               <li className="nav-item" key={i}>
                 <Link
                   to={link.path}
-                  onClick={closeNavbar}
                   className={`nav-link fw-semibold ${
                     location.pathname === link.path
                       ? "text-warning"
@@ -129,9 +198,10 @@ const RoleNavbar = () => {
               </li>
             ))}
 
+            {/* ================= USER DROPDOWN ================= */}
             <li className="nav-item dropdown position-relative">
               <button
-                className="btn btn-light fw-semibold px-3 mt-2 mt-lg-0"
+                className="btn btn-light fw-semibold px-3"
                 onClick={() => setShowDropdown(!showDropdown)}
               >
                 👤 {user.name}
@@ -142,14 +212,6 @@ const RoleNavbar = () => {
                   className="dropdown-menu show mt-2"
                   style={{ right: 0, left: "auto" }}
                 >
-                  <Link
-                    to={`/${user.role}`}
-                    className="dropdown-item"
-                    onClick={closeNavbar}
-                  >
-                    Dashboard
-                  </Link>
-
                   <button
                     onClick={handleLogout}
                     className="dropdown-item text-danger"

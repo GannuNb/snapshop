@@ -2,6 +2,7 @@ import Product from "../models/productModel.js";
 
 import PendingProduct from "../models/pendingProductModel.js";
 import { formatImage } from "../utils/imageHelper.js";
+import Category from "../models/categoryModel.js";
 
 
 export const createProduct = async (req, res) => {
@@ -163,35 +164,80 @@ export const getSellerProducts = async (req, res) => {
   }
 };
 
-/* GET PRODUCTS WITH PAGINATION */
+export const searchProducts = async (req, res) => {
+  try {
+    const { keyword } = req.query;
+
+    const products = await Product.find({
+      name: { $regex: keyword, $options: "i" },
+      isActive: true,
+    })
+      .select("name category")
+      .populate("category", "name")
+      .limit(5);
+
+    res.json(products);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 export const getProducts = async (req, res) => {
   try {
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 8;
     const skip = (page - 1) * limit;
 
-    const totalProducts = await Product.countDocuments({
-      isActive: true,
-    });
+    const { search, category, minPrice, maxPrice } = req.query;
 
-    const products = await Product.find({ isActive: true })
-      .select("name price category createdAt") // ⭐ only needed fields
+    let filter = { isActive: true };
+
+    /* 🔎 SEARCH */
+    if (search) {
+      filter.$or = [
+        { name: { $regex: search, $options: "i" } }
+      ];
+    }
+
+    /* 📦 MULTIPLE CATEGORY SUPPORT */
+    if (category) {
+      const categoryArray = category.split(",");
+
+      const categoryDocs = await Category.find({
+        name: { $in: categoryArray },
+      });
+
+      const categoryIds = categoryDocs.map((c) => c._id);
+
+      filter.category = { $in: categoryIds };
+    }
+
+    /* 💰 PRICE */
+    if (minPrice || maxPrice) {
+      filter.price = {};
+      if (minPrice) filter.price.$gte = Number(minPrice);
+      if (maxPrice) filter.price.$lte = Number(maxPrice);
+    }
+
+    const totalProducts = await Product.countDocuments(filter);
+
+    const products = await Product.find(filter)
       .populate("category", "name")
       .skip(skip)
       .limit(limit)
       .sort({ createdAt: -1 })
-      .lean(); // ⭐ HUGE SPEED BOOST
+      .lean();
 
     res.json({
       products,
       page,
       totalPages: Math.ceil(totalProducts / limit),
     });
+
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
-
 
 /* GET SINGLE PRODUCT */
 export const getProductById = async (req, res) => {

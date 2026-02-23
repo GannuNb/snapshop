@@ -4,7 +4,7 @@ import protect from "../middlewares/authMiddleware.js";
 import authorizeRoles from "../middlewares/roleMiddleware.js";
 import { getProductById } from "../controllers/productController.js";
 import upload from "../middlewares/uploadMiddleware.js";
-import { getProductImage } from "../controllers/productController.js";
+import { getProductImage ,searchProducts} from "../controllers/productController.js";
 
 
 const router = express.Router();
@@ -33,6 +33,7 @@ router.post(
 
 /* BUYER */
 router.get("/", getProducts);
+router.get("/search", searchProducts);
 
 router.get("/image/:id", getProductImage);
 

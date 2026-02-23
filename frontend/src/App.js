@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Home from "./pages/Home.js"
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
+import About from "./pages/About";
 
 
 //seller
@@ -34,6 +35,7 @@ import AdminPendingProducts from "./pages/AdminPendingProducts";
 import RoleNavbar from "./components/RoleNavbar.js";
 import Footer from "./components/Footer";
 import ProtectedRoute from "./components/ProtectedRoute";
+import ScrollToTop from "./components/ScrollToTop";
 
 
 
@@ -42,7 +44,9 @@ function App() {
     <BrowserRouter>
 
      <div className="d-flex flex-column min-vh-100">
+      <ScrollToTop />
        <RoleNavbar />
+       
 
       <Routes>
         {/* Public Routes */}
@@ -50,6 +54,7 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/unauthorized" element={<Unauthorized />} />
+        <Route path="/about" element={<About />} />
 
         {/* Buyer Routes */}
         <Route path="/buyer" element={<ProtectedRoute roles={["buyer"]}><BuyerDashboard /></ProtectedRoute>} />
