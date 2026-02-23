@@ -12,6 +12,7 @@ const RoleNavbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const collapseRef = useRef(null);
+  const collapseInstance = useRef(null);
 
   const { user } = useSelector((state) => state.auth);
 
@@ -23,9 +24,20 @@ const RoleNavbar = () => {
   /* ================= LOGOUT ================= */
   const handleLogout = () => {
     dispatch(logout());
+    closeNavbar();
     navigate("/login");
   };
 
+  const toggleNavbar = () => {
+    if (!collapseInstance.current) return;
+
+    if (collapseRef.current.classList.contains("show")) {
+      collapseInstance.current.hide();
+    } else {
+      collapseInstance.current.show();
+    }
+  };
+  /* ================= CLOSE NAVBAR ================= */
   const closeNavbar = () => {
     if (collapseRef.current) {
       const bsCollapse =
@@ -42,7 +54,7 @@ const RoleNavbar = () => {
       if (searchTerm.trim()) {
         try {
           const res = await axios.get(
-            `${API_URL}/search?keyword=${searchTerm}`
+            `${API_URL}/search?keyword=${searchTerm}`,
           );
           setSuggestions(res.data);
           setShowSuggestions(true);
@@ -53,11 +65,18 @@ const RoleNavbar = () => {
         setSuggestions([]);
         setShowSuggestions(false);
       }
-    }, 400); // 400ms debounce
+    }, 400);
 
     return () => clearTimeout(delayDebounce);
   }, [searchTerm]);
 
+  useEffect(() => {
+    if (collapseRef.current) {
+      collapseInstance.current = new Collapse(collapseRef.current, {
+        toggle: false,
+      });
+    }
+  }, []);
   /* ================= ROLE LINKS ================= */
   const roleLinks = {
     buyer: [
@@ -88,7 +107,11 @@ const RoleNavbar = () => {
     return (
       <nav className="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm px-lg-5 px-3">
         <div className="container-fluid">
-          <Link to="/" className="navbar-brand fw-bold text-white">
+          <Link
+            to="/"
+            className="navbar-brand fw-bold text-white"
+            onClick={closeNavbar}
+          >
             Snap<span style={{ color: "#ffd700" }}>Shop</span>
           </Link>
         </div>
@@ -99,17 +122,15 @@ const RoleNavbar = () => {
   return (
     <nav className="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm px-lg-5 px-3">
       <div className="container-fluid">
-
-        <Link to="/" className="navbar-brand fw-bold text-white">
+        <Link
+          to="/"
+          className="navbar-brand fw-bold text-white"
+          onClick={closeNavbar}
+        >
           Snap<span style={{ color: "#ffd700" }}>Shop</span>
         </Link>
 
-        <button
-          className="navbar-toggler"
-          type="button"
-          data-bs-toggle="collapse"
-          data-bs-target="#navbarContent"
-        >
+        <button className="navbar-toggler" type="button" onClick={toggleNavbar}>
           <span className="navbar-toggler-icon"></span>
         </button>
 
@@ -119,11 +140,9 @@ const RoleNavbar = () => {
           ref={collapseRef}
         >
           <ul className="navbar-nav ms-auto align-items-lg-center gap-lg-4 mt-3 mt-lg-0">
-
             {/* ================= SEARCH FOR BUYER ================= */}
             {user.role === "buyer" && (
               <div className="position-relative me-4">
-
                 <form
                   onSubmit={(e) => {
                     e.preventDefault();
@@ -133,6 +152,7 @@ const RoleNavbar = () => {
                       });
                       setShowSuggestions(false);
                       setSearchTerm("");
+                      closeNavbar();
                     }
                   }}
                 >
@@ -146,7 +166,6 @@ const RoleNavbar = () => {
                   />
                 </form>
 
-                {/* 🔥 LIVE SUGGESTIONS */}
                 {showSuggestions && searchTerm && (
                   <div
                     className="position-absolute bg-white shadow rounded-3 mt-1 w-100"
@@ -162,6 +181,7 @@ const RoleNavbar = () => {
                             navigate(`/buyer/product/${item._id}`);
                             setSearchTerm("");
                             setShowSuggestions(false);
+                            closeNavbar();
                           }}
                         >
                           <strong>{item.name}</strong>
@@ -178,7 +198,6 @@ const RoleNavbar = () => {
                     )}
                   </div>
                 )}
-
               </div>
             )}
 
@@ -187,6 +206,7 @@ const RoleNavbar = () => {
               <li className="nav-item" key={i}>
                 <Link
                   to={link.path}
+                  onClick={closeNavbar}
                   className={`nav-link fw-semibold ${
                     location.pathname === link.path
                       ? "text-warning"
@@ -221,7 +241,6 @@ const RoleNavbar = () => {
                 </div>
               )}
             </li>
-
           </ul>
         </div>
       </div>
