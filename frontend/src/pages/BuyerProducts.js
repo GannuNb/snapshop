@@ -36,17 +36,23 @@ const BuyerProducts = () => {
   const [maxPrice, setMaxPrice] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   /* HANDLE CATEGORY & SEARCH FROM NAVIGATION */
-  useEffect(() => {
-    if (location.state?.category) {
+useEffect(() => {
+  if (location.state) {
+    if (location.state.category) {
       setSelectedCategories([location.state.category]);
     }
 
-    if (location.state?.search) {
+    if (location.state.search) {
       setSearchQuery(location.state.search);
     }
-  }, [location.state]);
+  }
+
+  setIsInitialized(true);
+  // eslint-disable-next-line
+}, []);
 
   /* RESET PAGE WHEN FILTERS CHANGE */
   useEffect(() => {
@@ -54,24 +60,27 @@ const BuyerProducts = () => {
   }, [searchQuery, selectedCategories, minPrice, maxPrice]);
 
   /* FETCH PRODUCTS FROM BACKEND */
-  useEffect(() => {
-    dispatch(
-      fetchProducts({
-        page: currentPage,
-        search: searchQuery,
-        category: selectedCategories.join(","),
-        minPrice,
-        maxPrice,
-      }),
-    );
-  }, [
-    dispatch,
-    currentPage,
-    searchQuery,
-    selectedCategories,
-    minPrice,
-    maxPrice,
-  ]);
+useEffect(() => {
+  if (!isInitialized) return;
+
+  dispatch(
+    fetchProducts({
+      page: currentPage,
+      search: searchQuery,
+      category: selectedCategories.join(","),
+      minPrice,
+      maxPrice,
+    }),
+  );
+}, [
+  dispatch,
+  currentPage,
+  searchQuery,
+  selectedCategories,
+  minPrice,
+  maxPrice,
+  isInitialized,
+]);
 
   /* CLEAR SUCCESS MESSAGE */
   useEffect(() => {
