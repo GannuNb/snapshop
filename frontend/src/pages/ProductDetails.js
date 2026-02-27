@@ -251,6 +251,17 @@ const ProductDetails = () => {
           <div className="col-md-7 p-4">
             <h3>{product.name}</h3>
             <h4 className="text-success">₹{product.price}</h4>
+            <div className="mt-3 p-3 border rounded bg-light shadow-sm">
+              <div className="d-flex align-items-center">
+                <i className="bi bi-shop me-2 text-primary"></i>
+                <div>
+                  <small className="text-muted">Seller</small>
+                  <div className="fw-bold fs-6 text-dark">
+                    {product.seller.name}
+                  </div>
+                </div>
+              </div>
+            </div>
 
             {/* ⭐ QTY SECTION */}
             <div className="d-flex align-items-center my-3">
@@ -334,8 +345,16 @@ const ProductDetails = () => {
               </div>
             </div>
 
+            {/* ADDRESS WARNING */}
+            {savedAddresses.length === 0 && (
+              <div className="alert alert-warning mt-3 py-2">
+                ⚠️ Please add a delivery address to continue.
+              </div>
+            )}
+
+            {/* BUY BUTTON */}
             <button
-              className="btn btn-success mt-3"
+              className="btn btn-success mt-2 w-100"
               onClick={buyNowHandler}
               disabled={!address?.fullName}
             >
