@@ -3,7 +3,7 @@ import Product from "../models/productModel.js";
 import PendingProduct from "../models/pendingProductModel.js";
 import { formatImage } from "../utils/imageHelper.js";
 import Category from "../models/categoryModel.js";
-
+import sharp from "sharp";
 
 export const createProduct = async (req, res) => {
   try {
@@ -23,14 +23,26 @@ export const createProduct = async (req, res) => {
     };
 
     // ⭐ IMAGE SAVE
-    if (req.file) {
-      productData.image = {
-        data: req.file.buffer,
-        contentType: req.file.mimetype,
-      };
-    }
+    // if (req.file) {
+    //   productData.image = {
+    //     data: req.file.buffer,
+    //     contentType: req.file.mimetype,
+    //   };
+    // }
 
-    const product = await PendingProduct.create(productData);
+    if (req.file) {
+
+        const compressedImage = await sharp(req.file.buffer)
+          .resize(500) // resize width
+          .jpeg({ quality: 70 }) // compress quality
+          .toBuffer();
+
+        productData.image = {
+          data: compressedImage,
+          contentType: "image/jpeg",
+        };
+      }
+          const product = await PendingProduct.create(productData);
 
     res.status(201).json({
       message: "Product submitted for approval",
@@ -76,7 +88,8 @@ export const getProductImage = async (req, res) => {
     res.set("Content-Type", product.image.contentType);
 
     // ⭐ IMPORTANT: browser caching
-    res.set("Cache-Control", "public, max-age=86400");
+    // res.set("Cache-Control", "public, max-age=86400");
+    res.set("Cache-Control", "public, max-age=31536000, immutable");
 
     res.send(product.image.data);
   } catch (error) {

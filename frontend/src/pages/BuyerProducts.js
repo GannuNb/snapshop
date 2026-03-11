@@ -5,6 +5,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { fetchProducts } from "../redux/slices/productSlice";
 import { addItemToCart, clearCartMessage } from "../redux/slices/cartSlice";
 import ProductCard from "../components/ProductCard";
+import ProductCardSkeleton from "../components/ProductCardSkeleton";
 
 const categoriesList = [
   "Electronics",
@@ -39,20 +40,20 @@ const BuyerProducts = () => {
   const [isInitialized, setIsInitialized] = useState(false);
 
   /* HANDLE CATEGORY & SEARCH FROM NAVIGATION */
-useEffect(() => {
-  if (location.state) {
-    if (location.state.category) {
-      setSelectedCategories([location.state.category]);
+  useEffect(() => {
+    if (location.state) {
+      if (location.state.category) {
+        setSelectedCategories([location.state.category]);
+      }
+
+      if (location.state.search) {
+        setSearchQuery(location.state.search);
+      }
     }
 
-    if (location.state.search) {
-      setSearchQuery(location.state.search);
-    }
-  }
-
-  setIsInitialized(true);
-  // eslint-disable-next-line
-}, []);
+    setIsInitialized(true);
+    // eslint-disable-next-line
+  }, []);
 
   /* RESET PAGE WHEN FILTERS CHANGE */
   useEffect(() => {
@@ -60,27 +61,27 @@ useEffect(() => {
   }, [searchQuery, selectedCategories, minPrice, maxPrice]);
 
   /* FETCH PRODUCTS FROM BACKEND */
-useEffect(() => {
-  if (!isInitialized) return;
+  useEffect(() => {
+    if (!isInitialized) return;
 
-  dispatch(
-    fetchProducts({
-      page: currentPage,
-      search: searchQuery,
-      category: selectedCategories.join(","),
-      minPrice,
-      maxPrice,
-    }),
-  );
-}, [
-  dispatch,
-  currentPage,
-  searchQuery,
-  selectedCategories,
-  minPrice,
-  maxPrice,
-  isInitialized,
-]);
+    dispatch(
+      fetchProducts({
+        page: currentPage,
+        search: searchQuery,
+        category: selectedCategories.join(","),
+        minPrice,
+        maxPrice,
+      }),
+    );
+  }, [
+    dispatch,
+    currentPage,
+    searchQuery,
+    selectedCategories,
+    minPrice,
+    maxPrice,
+    isInitialized,
+  ]);
 
   /* CLEAR SUCCESS MESSAGE */
   useEffect(() => {
@@ -176,27 +177,31 @@ useEffect(() => {
           {successMessage && (
             <div className="alert alert-success">{successMessage}</div>
           )}
-
-          {buyerLoading && <p>Loading products...</p>}
-
-          {!buyerLoading && products.length === 0 && (
+          
+          {buyerLoading ? (
+            <div className="row">
+              {[...Array(8)].map((_, i) => (
+                <ProductCardSkeleton key={i} />
+              ))}
+            </div>
+          ) : products.length === 0 ? (
             <div className="text-center text-muted mt-5">
               <h5>No products found</h5>
             </div>
+          ) : (
+            <div className="row">
+              {products.map((p) => (
+                <ProductCard
+                  key={p._id}
+                  product={p}
+                  navigate={navigate}
+                  dispatch={dispatch}
+                  addItemToCart={addItemToCart}
+                  user={user}
+                />
+              ))}
+            </div>
           )}
-
-          <div className="row">
-            {products.map((p) => (
-              <ProductCard
-                key={p._id}
-                product={p}
-                navigate={navigate}
-                dispatch={dispatch}
-                addItemToCart={addItemToCart}
-                user={user}
-              />
-            ))}
-          </div>
 
           {/* ================= PAGINATION ================= */}
           {totalPages > 1 && (
